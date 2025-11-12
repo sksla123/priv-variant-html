@@ -45,13 +45,25 @@ jobs:
           
           # 2. 'docs/' 폴더 내의 모든 HTML 파일을 찾아서 리스트 항목으로 추가
           # index.html은 목록에서 제외
+          # 중요: GitHub Pages 프로젝트 사이트의 루트는 /레포명/ 이므로, 링크는 /레포명/ + 상대 경로가 되어야 합니다.
+          # actions/configure-pages@v5는 환경 변수 $GITHUB_PAGES_BASE_URL을 제공합니다.
+          BASE_URL=$(cat $GITHUB_ENV | grep 'GITHUB_PAGES_BASE_URL' | cut -d'=' -f2)
+          if [ -z "$BASE_URL" ]; then
+             # 환경 변수가 없는 경우 (예: 로컬 테스트), 레포명으로 직접 설정
+             REPO_NAME=$(basename $GITHUB_REPOSITORY)
+             BASE_URL="/$REPO_NAME"
+          fi
+          
+          # BASE_URL을 사용하여 링크 경로를 생성합니다.
           find docs -type f -name "*.html" ! -name "index.html" | while read -r filepath; do
             # docs/ 를 제거하여 상대 경로를 생성합니다.
             relative_path=$(echo "$filepath" | sed 's/^docs\///')
-            # 파일 경로를 읽기 쉬운 이름으로 변환합니다. (예: linked-list-merge-algorithm.html -> Linked List Merge Algorithm)
+            # 파일 경로를 읽기 쉬운 이름으로 변환합니다.
             display_name=$(echo "$relative_path" | sed -e 's/\.html$//' -e 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
             
-            echo "<li><a href=\"/${relative_path}\">${display_name}</a></li>" >> docs/index.html
+            # 최종 링크는 ${BASE_URL}/${relative_path} 형태가 됩니다.
+            # 예: /레포명/algorithm-visualizer/linked-list-merge-algorithm.html
+            echo "<li><a href=\"${BASE_URL}/${relative_path}\">${display_name}</a></li>" >> docs/index.html
           done
           
           # 3. HTML 꼬리말 작성

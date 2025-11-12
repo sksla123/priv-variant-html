@@ -1,0 +1,68 @@
+name: Generate Index and Deploy Pages
+
+on:
+  push:
+    branches:
+      - main  # 배포를 트리거할 브랜치
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # ----------------------------------------------------
+      # 1. HTML 파일 목록 스캔 및 index.html 동적 생성
+      # ----------------------------------------------------
+      - name: Generate index.html from docs folder
+        run: |
+          # 1. 스타일이 적용된 인덱스 페이지의 헤더와 기본 CSS 작성
+          echo '<!DOCTYPE html>' > docs/index.html
+          echo '<html lang="ko">' >> docs/index.html
+          echo '<head>' >> docs/index.html
+          echo '    <meta charset="UTF-8">' >> docs/index.html
+          echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' >> docs/index.html
+          echo '    <title>배포된 알고리즘 시각화 목록</title>' >> docs/index.html
+          echo '    <style>' >> docs/index.html
+          echo '        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; background-color: #f4f7f6; color: #333; }' >> docs/index.html
+          echo '        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }' >> docs/index.html
+          echo '        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px; margin-bottom: 30px; text-align: center; }' >> docs/index.html
+          echo '        ul { list-style: none; padding: 0; }' >> docs/index.html
+          echo '        li { margin-bottom: 15px; border-left: 5px solid #3498db; padding-left: 15px; transition: background-color 0.3s; }' >> docs/index.html
+          echo '        li:hover { background-color: #ecf0f1; border-color: #e74c3c; }' >> docs/index.html
+          echo '        a { text-decoration: none; color: #2980b9; font-size: 1.2em; font-weight: 600; display: block; padding: 5px 0; }' >> docs/index.html
+          echo '        a:hover { color: #e74c3c; }' >> docs/index.html
+          echo '    </style>' >> docs/index.html
+          echo '</head>' >> docs/index.html
+          echo '<body><div class="container">' >> docs/index.html
+          echo '<h1>✨ 알고리즘 시각화 페이지 목록</h1><ul>' >> docs/index.html
+          
+          # 2. 'docs/' 폴더 내의 모든 HTML 파일을 찾아서 리스트 항목으로 추가
+          # index.html은 목록에서 제외
+          find docs -type f -name "*.html" ! -name "index.html" | while read -r filepath; do
+            # docs/ 를 제거하여 상대 경로를 생성합니다.
+            relative_path=$(echo "$filepath" | sed 's/^docs\///')
+            # 파일 경로를 읽기 쉬운 이름으로 변환합니다. (예: linked-list-merge-algorithm.html -> Linked List Merge Algorithm)
+            display_name=$(echo "$relative_path" | sed -e 's/\.html$//' -e 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
+            
+            echo "<li><a href=\"/${relative_path}\">${display_name}</a></li>" >> docs/index.html
+          done
+          
+          # 3. HTML 꼬리말 작성
+          echo '</ul></div></body></html>' >> docs/index.html
+          
+      # ----------------------------------------------------
+      # 2. GitHub Pages 배포 (actions/upload-pages-artifact 사용)
+      # ----------------------------------------------------
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs' # 배포할 폴더
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

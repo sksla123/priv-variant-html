@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>연결 리스트 교집합 시각화</title>
+    <style>
+        /* CSS for Modern Look */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Step Info Styling (Moved and styled for prominence) */
+        #step-info-container {
+            margin-bottom: 30px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #ecf0f1;
+            border-left: 5px solid #3498db;
+            text-align: center;
+        }
+
+        #step-info {
+            font-size: 1.1em;
+            font-weight: 700; /* Increased font weight for better emphasis */
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        /* New CSS rule for highlighting specific values in the step info */
+        .highlight-value {
+            font-weight: 900;
+            color: #e74c3c; /* Red color for value emphasis */
+        }
+
+        /* List Styling */
+        .list-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .list-title {
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .list-title::before {
+            content: '📌';
+            margin-right: 8px;
+        }
+
+        .list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .node {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Highlight for current comparison */
+        .current-compare {
+            background-color: #e74c3c !important; /* Red for comparison */
+            transform: scale(1.05);
+        }
+
+        /* Highlight for merged node */
+        .merged {
+            background-color: #27ae60 !important; /* Green for merged */
+            animation: pulse 0.5s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        /* Result List Styling */
+        #result-list {
+            min-height: 50px;
+            background-color: #bdc3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .control-btn {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-btn:hover {
+            background: #2c3e50;
+        }
+
+        .control-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>연결 리스트 교집합 시각화</h1>
+        
+        <div id="step-info-container">
+            <div id="step-info">단계 0 / 0</div>
+        </div>
+        <div class="list-container">
+            <div class="list-title">BRUTUS (List A)</div>
+            <div id="list-a" class="list"></div>
+        </div>
+
+        <div class="list-container">
+            <div class="list-title">CAESAR (List B)</div>
+            <div id="list-b" class="list"></div>
+        </div>
+
+        <div class="list-container">
+            <div class="list-title">Merged List (Result)</div>
+            <div id="result-list" class="list"></div>
+        </div>
+
+        <div class="controls">
+            <button id="prev-btn" class="control-btn" disabled>&#9664; 이전 단계</button>
+            <button id="next-btn" class="control-btn">다음 단계 &#9654;</button>
+        </div>
+    </div>
+
+    <script>
+        // List Data
+        const BRUTUS = [1, 2, 4, 11, 31, 45, 173, 174];
+        const CAESAR = [1, 2, 4, 5, 45, 130, 140, 173];
+
+        // DOM Elements
+        const listADiv = document.getElementById('list-a');
+        const listBDiv = document.getElementById('list-b');
+        const resultDiv = document.getElementById('result-list');
+        const stepInfo = document.getElementById('step-info'); // Content div
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        // State variables
+        let step = 0;
+        let history = []; // Stores the state of each step
+        
+        // Helper function to apply CSS class for highlighting values in the action text
+        function highlightValue(value) {
+            if (value === '끝') {
+                return `<span class="highlight-value" style="color:#2980b9">${value}</span>`;
+            }
+            return `<span class="highlight-value">${value}</span>`;
+        }
+
+        // --- Step Generation Logic ---
+
+        function generateSteps() {
+            let pA = 0;
+            let pB = 0;
+            let merged = [];
+
+            // Initial state (Step 0)
+            history.push({
+                pA: 0,
+                pB: 0,
+                merged: [],
+                action: '초기 상태: List A와 List B의 첫 노드를 비교할 준비',
+                mergedNodeValue: null
+            });
+
+            while (pA < BRUTUS.length || pB < CAESAR.length) {
+                let currentA = BRUTUS[pA];
+                let currentB = CAESAR[pB];
+                let addedValue = null;
+                let action = '';
+
+                if (pA < BRUTUS.length && (pB >= CAESAR.length || currentA <= currentB)) {
+                    // BRUTUS 노드를 선택하는 경우 (List B가 끝났거나, BRUTUS 노드가 더 작거나 같을 때)
+                    addedValue = currentA;
+                    merged.push(currentA);
+                    action = `List A의 ${highlightValue(currentA)}를 List B의 ${highlightValue(currentB !== undefined ? currentB : '끝')}와 비교. ${highlightValue(currentA)}가 더 작거나 같으므로 병합 리스트에 추가하고 List A 포인터를 이동.`;
+                    pA++;
+                } else if (pB < CAESAR.length) {
+                    // CAESAR 노드를 선택하는 경우 (List A가 끝나지 않았고 CAESAR 노드가 더 작을 때)
+                    addedValue = currentB;
+                    merged.push(currentB);
+                    action = `List B의 ${highlightValue(currentB)}를 List A의 ${highlightValue(currentA !== undefined ? currentA : '끝')}와 비교. ${highlightValue(currentB)}가 더 작으므로 병합 리스트에 추가하고 List B 포인터를 이동.`;
+                    pB++;
+                }
+
+                // Push the state after the merge action
+                history.push({
+                    pA: pA, // Pointer position AFTER the action
+                    pB: pB, // Pointer position AFTER the action
+                    merged: [...merged], // Copy of the merged list
+                    action: action,
+                    mergedNodeValue: addedValue // Value that was just added
+                });
+            }
+            
+            // Final state
+            history.push({
+                pA: BRUTUS.length,
+                pB: CAESAR.length,
+                merged: [...merged],
+                action: '✅ 병합 완료. 두 리스트의 모든 노드가 병합 리스트에 추가되었습니다.',
+                mergedNodeValue: null
+            });
+
+            // Set the max step count
+            updateUI(0);
+        }
+
+        // --- UI Rendering Logic ---
+
+        function renderList(list, container, pointerIndex, mergedValues, lastMergedValue) {
+            container.innerHTML = '';
+            list.forEach((value, index) => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.textContent = value;
+
+                // 1. Merged Highlight: Check if this value is in the final merged list (for step > 0)
+                if (mergedValues.includes(value) && value !== lastMergedValue) {
+                    let countInList = list.slice(0, index + 1).filter(v => v === value).length;
+                    let countInMerged = mergedValues.filter(v => v === value).length;
+
+                    if (countInList <= countInMerged) {
+                         node.classList.add('merged');
+                    }
+                }
+
+                // 2. Comparison Highlight: The node currently pointed to
+                if (index === pointerIndex) {
+                    node.classList.add('current-compare');
+                }
+                
+                // 3. Newly Merged Highlight: The node value that was just added in the *previous* step
+                if (lastMergedValue !== null && value === lastMergedValue && index + 1 === pointerIndex) {
+                    node.classList.add('merged');
+                }
+
+                container.appendChild(node);
+            });
+        }
+        
+        function renderResultList(merged, lastMergedValue) {
+            resultDiv.innerHTML = '';
+            merged.forEach((value, index) => {
+                const node = document.createElement('div');
+                node.className = 'node merged';
+                node.textContent = value;
+                
+                // Highlight the node that was *just* added in this step
+                if (value === lastMergedValue && index === merged.length - 1) {
+                     node.style.backgroundColor = '#f1c40f'; /* Yellow for the latest addition */
+                     node.style.color = '#333';
+                     node.classList.remove('merged');
+                     node.style.animation = 'none'; // Prevent the green pulse
+                }
+
+                resultDiv.appendChild(node);
+            });
+        }
+
+
+        function updateUI(currentStep) {
+            const state = history[currentStep];
+            if (!state) return;
+
+            // Render source lists
+            renderList(BRUTUS, listADiv, state.pA, state.merged, state.mergedNodeValue);
+            renderList(CAESAR, listBDiv, state.pB, state.merged, state.mergedNodeValue);
+
+            // Render result list
+            const prevMergedValue = currentStep > 0 ? history[currentStep-1].mergedNodeValue : null;
+            renderResultList(state.merged, prevMergedValue);
+            
+            // Update step information - Removed markdown ** and added step number HTML
+            stepInfo.innerHTML = `<span>[${currentStep} / ${history.length - 1} 단계]</span> ${state.action}`;
+            
+            // Update button states
+            prevBtn.disabled = currentStep === 0;
+            nextBtn.disabled = currentStep === history.length - 1;
+        }
+
+        // --- Event Listeners ---
+
+        prevBtn.addEventListener('click', () => {
+            if (step > 0) {
+                step--;
+                updateUI(step);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (step < history.length - 1) {
+                step++;
+                updateUI(step);
+            }
+        });
+
+        // Initialize visualization
+        generateSteps();
+    </script>
+</body>
+</html>

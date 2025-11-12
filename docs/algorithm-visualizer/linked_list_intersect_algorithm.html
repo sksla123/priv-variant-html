@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연결 리스트 교집합 시각화</title>
+    <title>연결 리스트 교집합 시각화 (가독성 최종 개선)</title>
     <style>
-        /* CSS for Modern Look */
+        /* Base Styling */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -16,14 +16,32 @@
             padding: 20px;
         }
 
-        .container {
+        /* Main Container for Layout */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* 황금비 분할 */
+        .input-area {
+            width: 38.2%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            order: 1;
+        }
+
+        .visualization-area {
+            width: 61.8%;
             background: #fff;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 900px;
-            width: 100%;
-            margin-top: 20px;
+            order: 2;
         }
 
         h1 {
@@ -34,32 +52,140 @@
             text-align: center;
         }
 
-        /* Step Info Styling (Moved and styled for prominence) */
+        /* Input Controls (변경 없음) */
+        .input-controls {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px dashed #3498db;
+            border-radius: 8px;
+            background-color: #f0f7ff;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+        .input-group input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        #visualize-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #visualize-btn:hover {
+            background-color: #2ecc71;
+        }
+        #error-message {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        /* Step Info - 수정됨 */
         #step-info-container {
             margin-bottom: 30px;
             padding: 15px;
             border-radius: 8px;
-            background-color: #ecf0f1;
-            border-left: 5px solid #3498db;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
             text-align: center;
         }
 
         #step-info {
-            font-size: 1.1em;
-            font-weight: 700; /* Increased font weight for better emphasis */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: 700;
             color: #2c3e50;
-            line-height: 1.4;
         }
         
-        /* New CSS rule for highlighting specific values in the step info */
-        .highlight-value {
-            font-weight: 900;
-            color: #e74c3c; /* Red color for value emphasis */
+        /* 1. 단계 번호 박스 */
+        #step-info .step-number-box {
+            background-color: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            min-width: 150px;
+        }
+        
+        /* 2. 비교 결과 텍스트 - 폰트 크기 및 강조 조절 */
+        #step-info .comparison-result {
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
 
-        /* List Styling */
+        /* 3. 교집합 추가 텍스트 (신규 스타일) */
+        #step-info .intersection-action-text {
+            color: #27ae60;
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        /* 4. 포인터 이동 텍스트 */
+        #step-info .pointer-move-text {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .highlight-value {
+            font-weight: 800;
+            color: #e74c3c;
+            padding: 2px 5px;
+            border: 1px solid #e74c3c;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .highlight-value.blue {
+            color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        /* 시각화 중 컨트롤 및 재설정 버튼 (변경 없음) */
+        #viz-controls {
+            display: none;
+            text-align: center;
+        }
+        #reset-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        #reset-btn:hover {
+            background-color: #d35400;
+        }
+
+        /* List Styling & Pointers (나머지 변경 없음) */
         .list-container {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -74,15 +200,32 @@
             align-items: center;
         }
 
-        .list-title::before {
-            content: '📌';
-            margin-right: 8px;
-        }
-
         .list {
             display: flex;
-            flex-wrap: wrap;
             gap: 10px;
+            min-height: 40px;
+        }
+
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        
+        .pointer {
+            position: absolute;
+            top: 0;
+            font-size: 1.5em;
+            color: #f1c40f;
+            font-weight: bold;
+            line-height: 1;
+            animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
         }
 
         .node {
@@ -93,28 +236,14 @@
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            position: relative;
         }
 
-        /* Highlight for current comparison */
         .current-compare {
-            background-color: #e74c3c !important; /* Red for comparison */
+            background-color: #e74c3c !important;
             transform: scale(1.05);
+            box-shadow: 0 0 0 3px #e74c3c, 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* Highlight for merged node */
-        .merged {
-            background-color: #27ae60 !important; /* Green for merged */
-            animation: pulse 0.5s ease-out;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
-        }
-
-        /* Result List Styling */
         #result-list {
             min-height: 50px;
             background-color: #bdc3c7;
@@ -122,13 +251,28 @@
             border-radius: 8px;
             margin-top: 20px;
         }
+        .intersection-node {
+            background-color: #27ae60 !important;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: pulse 0.5s ease-out;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
 
         /* Controls */
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 30px;
+            margin-top: 20px;
             gap: 20px;
         }
 
@@ -157,165 +301,370 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>연결 리스트 교집합 시각화</h1>
-        
-        <div id="step-info-container">
-            <div id="step-info">단계 0 / 0</div>
-        </div>
-        <div class="list-container">
-            <div class="list-title">BRUTUS (List A)</div>
-            <div id="list-a" class="list"></div>
+    <div class="main-content">
+        <div class="input-area">
+            <h1>🔗 설정 및 컨트롤</h1>
+            
+            <div id="input-view">
+                <div class="input-controls">
+                    <div class="input-group">
+                        <label for="list-a-name">List P1 이름</label>
+                        <input type="text" id="list-a-name" value="BRUTUS (List P1)">
+                    </div>
+                    <div class="input-group">
+                        <label for="list-a-values">List P1 값 (쉼표로 구분, 정렬 자동 처리)</label>
+                        <input type="text" id="list-a-values" value="1, 2, 4, 11, 31, 45, 173, 174">
+                    </div>
+                    <hr>
+                    <div class="input-group">
+                        <label for="list-b-name">List P2 이름</label>
+                        <input type="text" id="list-b-name" value="CAESAR (List P2)">
+                    </div>
+                    <div class="input-group">
+                        <label for="list-b-values">List P2 값 (쉼표로 구분, 정렬 자동 처리)</label>
+                        <input type="text" id="list-b-values" value="1, 2, 4, 5, 45, 130, 140, 173">
+                    </div>
+                    <button id="visualize-btn">시각화 시작</button>
+                    <div id="error-message"></div>
+                </div>
+            </div>
+
+            <div id="viz-controls" style="display: none;">
+                <button id="reset-btn">재설정 (새로운 값 입력)</button>
+                
+                <div id="step-info-container">
+                    <div id="step-info">시각화 준비 중...</div>
+                </div>
+
+                <div class="controls">
+                    <button id="prev-btn" class="control-btn" disabled>&#9664; 이전 단계</button>
+                    <button id="next-btn" class="control-btn" disabled>다음 단계 &#9654;</button>
+                </div>
+            </div>
+            
         </div>
 
-        <div class="list-container">
-            <div class="list-title">CAESAR (List B)</div>
-            <div id="list-b" class="list"></div>
-        </div>
+        <div class="visualization-area">
+            <h1>📊 교집합 시각화 결과</h1>
+            
+            <div class="list-container">
+                <div class="list-title" id="list-a-title">BRUTUS (List P1)</div>
+                <div id="list-a" class="list"></div>
+            </div>
 
-        <div class="list-container">
-            <div class="list-title">Merged List (Result)</div>
-            <div id="result-list" class="list"></div>
-        </div>
+            <div class="list-container">
+                <div class="list-title" id="list-b-title">CAESAR (List P2)</div>
+                <div id="list-b" class="list"></div>
+            </div>
 
-        <div class="controls">
-            <button id="prev-btn" class="control-btn" disabled>&#9664; 이전 단계</button>
-            <button id="next-btn" class="control-btn">다음 단계 &#9654;</button>
+            <div class="list-container">
+                <div class="list-title">Intersection List (Result)</div>
+                <div id="result-list" class="list"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // List Data
-        const BRUTUS = [1, 2, 4, 11, 31, 45, 173, 174];
-        const CAESAR = [1, 2, 4, 5, 45, 130, 140, 173];
+        // List Data (사용자 입력으로 변경될 변수)
+        let listAData = [];
+        let listBData = [];
+        let listAName = '';
+        let listBName = '';
 
         // DOM Elements
+        const inputView = document.getElementById('input-view');
+        const vizControls = document.getElementById('viz-controls');
         const listADiv = document.getElementById('list-a');
         const listBDiv = document.getElementById('list-b');
         const resultDiv = document.getElementById('result-list');
-        const stepInfo = document.getElementById('step-info'); // Content div
+        const stepInfo = document.getElementById('step-info');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
+        const visualizeBtn = document.getElementById('visualize-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const errorMsg = document.getElementById('error-message');
+
+        // Title Elements
+        const listATitle = document.getElementById('list-a-title');
+        const listBTitle = document.getElementById('list-b-title');
+
 
         // State variables
         let step = 0;
-        let history = []; // Stores the state of each step
-        
-        // Helper function to apply CSS class for highlighting values in the action text
-        function highlightValue(value) {
+        let history = []; 
+        let isInitialized = false;
+
+        // Helper function for text highlighting
+        function highlightValue(value, isBlue = false) {
             if (value === '끝') {
-                return `<span class="highlight-value" style="color:#2980b9">${value}</span>`;
+                return `<span class="highlight-value blue">${value}</span>`;
             }
             return `<span class="highlight-value">${value}</span>`;
         }
 
-        // --- Step Generation Logic ---
+        // --- Data Processing and Validation ---
+
+        function processInput(inputValue, listName) {
+            errorMsg.textContent = '';
+            
+            let rawNumbers = inputValue.split(',')
+                                        .map(s => s.trim())
+                                        .filter(s => s.length > 0);
+            
+            let processedList = [];
+            let invalidFound = false;
+
+            for (const s of rawNumbers) {
+                const num = parseInt(s);
+                if (isNaN(num) || String(num) !== s) {
+                    if (s !== "") {
+                        invalidFound = true;
+                    }
+                } else {
+                    processedList.push(num);
+                }
+            }
+
+            if (invalidFound) {
+                errorMsg.textContent += `경고: ${listName} 입력에 숫자가 아닌 값이 포함되어 제외되었습니다. `;
+            }
+
+            processedList.sort((a, b) => a - b);
+            processedList = Array.from(new Set(processedList));
+
+            return processedList;
+        }
+
+        // --- Core Logic ---
+
+        function loadNewData() {
+            const nameA = document.getElementById('list-a-name').value.trim();
+            const valuesA = document.getElementById('list-a-values').value.trim();
+            const nameB = document.getElementById('list-b-name').value.trim();
+            const valuesB = document.getElementById('list-b-values').value.trim();
+
+            listAData = processInput(valuesA, nameA);
+            listBData = processInput(valuesB, nameB);
+            
+            listAName = nameA;
+            listBName = nameB;
+
+            listATitle.textContent = listAName;
+            listBTitle.textContent = listBName;
+
+            if (listAData.length === 0 && listBData.length === 0 && (valuesA.length > 0 || valuesB.length > 0)) {
+                 errorMsg.textContent = '입력된 모든 값이 유효하지 않거나 비어있습니다. 숫자를 입력해주세요.';
+                 isInitialized = false;
+            } else if (listAData.length === 0 && listBData.length === 0) {
+                isInitialized = false;
+            } else {
+                errorMsg.textContent = '';
+                isInitialized = true;
+                generateSteps();
+                
+                // 🚀 성공 시 레이아웃 전환
+                inputView.style.display = 'none';
+                vizControls.style.display = 'block';
+                return;
+            }
+            
+            // 로드 실패 시 UI 초기화
+            stepInfo.innerHTML = '시각화 시작 버튼을 눌러주세요.';
+            listADiv.innerHTML = '';
+            listBDiv.innerHTML = '';
+            resultDiv.innerHTML = '';
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+        }
+
+        function resetVisualization() {
+            // 🔄 레이아웃 전환
+            inputView.style.display = 'block';
+            vizControls.style.display = 'none';
+            
+            // 상태 초기화
+            isInitialized = false;
+            step = 0;
+            history = [];
+            listAData = [];
+            listBData = [];
+
+            // 시각화 영역 초기화
+            listADiv.innerHTML = '';
+            listBDiv.innerHTML = '';
+            resultDiv.innerHTML = '';
+            listATitle.textContent = document.getElementById('list-a-name').value.trim();
+            listBTitle.textContent = document.getElementById('list-b-name').value.trim();
+            
+            // 컨트롤 초기화
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            stepInfo.innerHTML = '시각화 시작 버튼을 눌러주세요.';
+            errorMsg.textContent = '';
+        }
+
+
+        // --- Step Generation Logic (Action 문자열 생성 로직 수정) ---
 
         function generateSteps() {
             let pA = 0;
             let pB = 0;
-            let merged = [];
+            let intersection = [];
+            history = [];
+            step = 0;
 
             // Initial state (Step 0)
             history.push({
                 pA: 0,
                 pB: 0,
-                merged: [],
-                action: '초기 상태: List A와 List B의 첫 노드를 비교할 준비',
-                mergedNodeValue: null
+                intersection: [],
+                action: {
+                    comparison: 'P1과 P2의 첫 노드를 비교할 준비가 되었습니다.',
+                    intersection: '',
+                    move: '준비 완료'
+                },
+                addedValue: null,
+                movedPointer: null
             });
 
-            while (pA < BRUTUS.length || pB < CAESAR.length) {
-                let currentA = BRUTUS[pA];
-                let currentB = CAESAR[pB];
+            while (pA < listAData.length && pB < listBData.length) {
+                let currentA = listAData[pA];
+                let currentB = listBData[pB];
                 let addedValue = null;
-                let action = '';
+                let action = {};
+                let movedPointer = null;
+                
+                let comparisonText = '';
+                let intersectionText = '';
+                let pointerMoveText = '';
+                
+                // 🚀 비교 텍스트 생성 로직 수정
+                const p1Node = highlightValue(currentA);
+                const p2Node = highlightValue(currentB);
+                
+                const p1CompText = `${listAName}의 ${p1Node}`;
+                const p2CompText = `${listBName}의 ${p2Node}`;
 
-                if (pA < BRUTUS.length && (pB >= CAESAR.length || currentA <= currentB)) {
-                    // BRUTUS 노드를 선택하는 경우 (List B가 끝났거나, BRUTUS 노드가 더 작거나 같을 때)
+                if (currentA === currentB) {
                     addedValue = currentA;
-                    merged.push(currentA);
-                    action = `List A의 ${highlightValue(currentA)}를 List B의 ${highlightValue(currentB !== undefined ? currentB : '끝')}와 비교. ${highlightValue(currentA)}가 더 작거나 같으므로 병합 리스트에 추가하고 List A 포인터를 이동.`;
+                    intersection.push(currentA);
+                    
+                    // BRUTUS의 2와<br>CAESAR의 2가 같습니다.
+                    comparisonText = `${p1CompText}와<br>${p2CompText}가 같습니다.`; 
+                    intersectionText = `교집합에 추가.`;
+                    pointerMoveText = `P1 포인터 이동 | P2 포인터 이동`;
+                    movedPointer = 'Both';
                     pA++;
-                } else if (pB < CAESAR.length) {
-                    // CAESAR 노드를 선택하는 경우 (List A가 끝나지 않았고 CAESAR 노드가 더 작을 때)
-                    addedValue = currentB;
-                    merged.push(currentB);
-                    action = `List B의 ${highlightValue(currentB)}를 List A의 ${highlightValue(currentA !== undefined ? currentA : '끝')}와 비교. ${highlightValue(currentB)}가 더 작으므로 병합 리스트에 추가하고 List B 포인터를 이동.`;
+                    pB++;
+                } else if (currentA < currentB) {
+                    // BRUTUS의 2가<br>CAESAR의 5보다 작습니다.
+                    comparisonText = `${p1CompText}가<br>${p2CompText}보다 작습니다.`; 
+                    intersectionText = '';
+                    pointerMoveText = `P1 포인터 이동`;
+                    movedPointer = 'P1';
+                    pA++;
+                } else {
+                    // CAESAR의 5가<br>BRUTUS의 2보다 작습니다.
+                    comparisonText = `${p2CompText}가<br>${p1CompText}보다 작습니다.`; 
+                    intersectionText = '';
+                    pointerMoveText = `P2 포인터 이동`;
+                    movedPointer = 'P2';
                     pB++;
                 }
+                
+                action.comparison = comparisonText;
+                action.intersection = intersectionText;
+                action.move = pointerMoveText;
 
-                // Push the state after the merge action
                 history.push({
-                    pA: pA, // Pointer position AFTER the action
-                    pB: pB, // Pointer position AFTER the action
-                    merged: [...merged], // Copy of the merged list
+                    pA: pA, 
+                    pB: pB, 
+                    intersection: [...intersection],
                     action: action,
-                    mergedNodeValue: addedValue // Value that was just added
+                    addedValue: addedValue,
+                    movedPointer: movedPointer
                 });
             }
             
-            // Final state
+            let finalAction = {};
+            finalAction.comparison = '✅ 교집합 찾기 완료.';
+            finalAction.intersection = '';
+            finalAction.move = '어느 한 리스트가 끝났습니다.';
+            if (intersection.length === 0) {
+                 finalAction.move += ' (교집합 결과 없음)';
+            }
+
             history.push({
-                pA: BRUTUS.length,
-                pB: CAESAR.length,
-                merged: [...merged],
-                action: '✅ 병합 완료. 두 리스트의 모든 노드가 병합 리스트에 추가되었습니다.',
-                mergedNodeValue: null
+                pA: pA,
+                pB: pB,
+                intersection: [...intersection],
+                action: finalAction,
+                addedValue: null,
+                movedPointer: null
             });
 
-            // Set the max step count
             updateUI(0);
         }
 
-        // --- UI Rendering Logic ---
-
-        function renderList(list, container, pointerIndex, mergedValues, lastMergedValue) {
+        // --- UI Rendering Logic (이전과 동일) ---
+        
+        function renderList(list, container, pointerIndex) {
             container.innerHTML = '';
             list.forEach((value, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'node-wrapper';
+
                 const node = document.createElement('div');
                 node.className = 'node';
                 node.textContent = value;
-
-                // 1. Merged Highlight: Check if this value is in the final merged list (for step > 0)
-                if (mergedValues.includes(value) && value !== lastMergedValue) {
-                    let countInList = list.slice(0, index + 1).filter(v => v === value).length;
-                    let countInMerged = mergedValues.filter(v => v === value).length;
-
-                    if (countInList <= countInMerged) {
-                         node.classList.add('merged');
-                    }
-                }
-
-                // 2. Comparison Highlight: The node currently pointed to
-                if (index === pointerIndex) {
-                    node.classList.add('current-compare');
-                }
                 
-                // 3. Newly Merged Highlight: The node value that was just added in the *previous* step
-                if (lastMergedValue !== null && value === lastMergedValue && index + 1 === pointerIndex) {
-                    node.classList.add('merged');
+                if (index === pointerIndex) {
+                    const pointer = document.createElement('div');
+                    pointer.className = 'pointer';
+                    pointer.innerHTML = '&#9660;'; 
+                    wrapper.appendChild(pointer);
+                    node.classList.add('current-compare');
+                } else if (index < pointerIndex) {
+                    node.style.backgroundColor = '#95a5aa'; 
                 }
 
-                container.appendChild(node);
+                wrapper.appendChild(node);
+                container.appendChild(wrapper);
             });
+            
+            if (pointerIndex >= list.length) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'node-wrapper';
+                const pointer = document.createElement('div');
+                pointer.className = 'pointer';
+                pointer.innerHTML = '&#9660;';
+                pointer.style.color = '#2980b9'; 
+                wrapper.appendChild(pointer);
+                
+                const endNode = document.createElement('div');
+                endNode.className = 'node';
+                endNode.textContent = '끝';
+                endNode.style.backgroundColor = '#2980b9';
+                wrapper.appendChild(endNode);
+                container.appendChild(wrapper);
+            }
         }
         
-        function renderResultList(merged, lastMergedValue) {
+        function renderIntersectionList(intersection, addedValue) {
             resultDiv.innerHTML = '';
-            merged.forEach((value, index) => {
+            intersection.forEach((value, index) => {
                 const node = document.createElement('div');
-                node.className = 'node merged';
-                node.textContent = value;
                 
-                // Highlight the node that was *just* added in this step
-                if (value === lastMergedValue && index === merged.length - 1) {
-                     node.style.backgroundColor = '#f1c40f'; /* Yellow for the latest addition */
+                if (value === addedValue && index === intersection.length - 1) {
+                     node.className = 'intersection-node';
+                     node.style.backgroundColor = '#f1c40f'; 
                      node.style.color = '#333';
-                     node.classList.remove('merged');
-                     node.style.animation = 'none'; // Prevent the green pulse
+                     node.style.animation = 'pulse 0.5s ease-out'; 
+                } else {
+                    node.className = 'intersection-node';
                 }
-
+                
+                node.textContent = value;
                 resultDiv.appendChild(node);
             });
         }
@@ -323,25 +672,30 @@
 
         function updateUI(currentStep) {
             const state = history[currentStep];
-            if (!state) return;
+            if (!state || !isInitialized) {
+                 return;
+            }
 
-            // Render source lists
-            renderList(BRUTUS, listADiv, state.pA, state.merged, state.mergedNodeValue);
-            renderList(CAESAR, listBDiv, state.pB, state.merged, state.mergedNodeValue);
+            renderList(listAData, listADiv, state.pA);
+            renderList(listBData, listBDiv, state.pB);
 
-            // Render result list
-            const prevMergedValue = currentStep > 0 ? history[currentStep-1].mergedNodeValue : null;
-            renderResultList(state.merged, prevMergedValue);
+            renderIntersectionList(state.intersection, state.addedValue);
             
-            // Update step information - Removed markdown ** and added step number HTML
-            stepInfo.innerHTML = `<span>[${currentStep} / ${history.length - 1} 단계]</span> ${state.action}`;
+            const stepNumberHTML = `<div class="step-number-box">[${currentStep} / ${history.length - 1} 단계]</div>`;
+            const comparisonHTML = `<div class="comparison-result">${state.action.comparison}</div>`;
+            const intersectionActionHTML = state.action.intersection ? `<div class="intersection-action-text">${state.action.intersection}</div>` : '';
+            const moveHTML = `<div class="pointer-move-text">${state.action.move}</div>`;
             
-            // Update button states
+            stepInfo.innerHTML = stepNumberHTML + comparisonHTML + intersectionActionHTML + moveHTML;
+            
             prevBtn.disabled = currentStep === 0;
             nextBtn.disabled = currentStep === history.length - 1;
         }
 
         // --- Event Listeners ---
+
+        visualizeBtn.addEventListener('click', loadNewData);
+        resetBtn.addEventListener('click', resetVisualization);
 
         prevBtn.addEventListener('click', () => {
             if (step > 0) {
@@ -357,8 +711,7 @@
             }
         });
 
-        // Initialize visualization
-        generateSteps();
+        document.addEventListener('DOMContentLoaded', resetVisualization);
     </script>
 </body>
 </html>

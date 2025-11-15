@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스킵 포인터 교집합 시각화 (타겟 강조)</title>
+    <title>스킵 포인터 교집합 시각화 (비교 대상 강조)</title>
     <style>
         /* Base Styling */
         body {
@@ -247,13 +247,12 @@
             font-weight: bold;
         }
 
-        .current-compare {
-            background-color: #e74c3c !important;
-            transform: scale(1.05);
-            box-shadow: 0 0 0 3px #e74c3c, 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* ⭐ [신규] 스킵 타겟 강조 스타일 */
+        /* * [신규] 하이라이트 순서 (CSS에서 나중에 선언된 것이 우선순위가 높음)
+         * 1. (기본) 스킵 타겟 (주황색)
+         * 2. (신규) 비교 벤치마크 (보라색)
+         * 3. (최우선) 현재 포인터 (빨간색)
+         */
+        
         .current-skip-target {
             background-color: #f39c12 !important; /* 주황색 배경 */
             animation: skip-target-pulse 1s infinite;
@@ -263,6 +262,24 @@
             0% { box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.7); }
             50% { box-shadow: 0 0 0 6px rgba(243, 156, 18, 0.3); }
             100% { box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.7); }
+        }
+
+        /* ⭐ [신규] 스킵 비교 대상 강조 스타일 (보라색) */
+        .comparison-benchmark {
+            background-color: #8e44ad !important; /* 보라색 배경 */
+            animation: benchmark-pulse 1s infinite;
+            transform: scale(1.05);
+        }
+        @keyframes benchmark-pulse {
+            0% { box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(142, 68, 173, 0.3); }
+            100% { box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.7); }
+        }
+
+        .current-compare {
+            background-color: #e74c3c !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px #e74c3c, 0 2px 4px rgba(0,0,0,0.3);
         }
 
 
@@ -378,7 +395,7 @@
                     <div id="step-info">시각화 준비 중...</div>
                 </div>
 
-                <div class="controls">
+                <div classs="controls">
                     <button id="prev-btn" class="control-btn" disabled>&#9664; 이전 단계</button>
                     <button id="next-btn" class="control-btn" disabled>다음 단계 &#9654;</button>
                 </div>
@@ -554,7 +571,7 @@
         }
 
 
-        // --- Step Generation Logic (⭐ 시각화를 위해 history에 skipTargetIndex 추가) ---
+        // --- Step Generation Logic (⭐ 벤치마크 시각화를 위해 history 수정) ---
         function generateSteps() {
             let pA = 0;
             let pB = 0;
@@ -563,7 +580,24 @@
             step = 0;
 
             // Helper for highlighting
-            const h = (val) => `<span class="highlight-value">${val}</span>`;
+            const h = (val, colorClass = "") => {
+                // (수정) 벤치마크(보라색) 텍스트 하이라이트를 위해 클래스 추가
+                let valueClass = 'highlight-value';
+                if (colorClass === 'benchmark') {
+                    valueClass += ' purple'; // CSS에 .highlight-value.purple 스타일이 필요 (아래 CSS 추가됨)
+                }
+                return `<span class="${valueClass}">${val}</span>`;
+            };
+            // (CSS 추가) .highlight-value.purple 에 대한 스타일
+            const styleSheet = document.createElement("style");
+            styleSheet.innerText = `
+                .highlight-value.purple {
+                    color: #8e44ad;
+                    border-color: #8e44ad;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+
 
             // Initial state (Step 0)
             history.push({
@@ -576,7 +610,9 @@
                 },
                 addedValue: null,
                 skipTargetIndex: null, // (신규)
-                skipList: null       // (신규)
+                skipList: null,       // (신규)
+                benchmarkIndex: null, // (신규)
+                benchmarkList: null   // (신규)
             });
 
             while (pA < listAData.length && pB < listBData.length) {
@@ -585,7 +621,11 @@
                 let addedValue = null;
                 
                 const p1Text = `${listAName} ${h(itemA.value)}`;
+                // ⭐ (수정) 벤치마크 하이라이트 적용
+                const p1TextBenchmark = `${listAName} ${h(itemA.value, 'benchmark')}`;
                 const p2Text = `${listBName} ${h(itemB.value)}`;
+                const p2TextBenchmark = `${listBName} ${h(itemB.value, 'benchmark')}`;
+
 
                 // === CASE 1: MATCH ===
                 if (itemA.value === itemB.value) {
@@ -597,8 +637,7 @@
                         result: `✅ 일치! 교집합에 ${h(itemA.value)} 추가.`,
                         move: `P1 포인터 이동 | P2 포인터 이동`
                     };
-                    // '일치'는 하나의 단계로 처리
-                    history.push({ pA, pB, intersection: [...intersection], action, addedValue, skipTargetIndex: null, skipList: null });
+                    history.push({ pA, pB, intersection: [...intersection], action, addedValue, skipList: null, benchmarkList: null });
                     pA++;
                     pB++;
                 } 
@@ -606,8 +645,9 @@
                 else if (itemA.value < itemB.value) {
                     
                     // [단계 1: 비교]
-                    let action1 = { comparison: `${p1Text} < ${p2Text} (P1 전진 필요)` };
-                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipTargetIndex: null, skipList: null });
+                    let action1 = { comparison: `${p1Text} < ${p2TextBenchmark} (P1 전진 필요)` };
+                    // (신규) P2를 벤치마크로 설정
+                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipList: null, benchmarkList: 'P2', benchmarkIndex: pB });
                     
                     // [단계 2: 스킵 확인]
                     let action2 = { ...action1 };
@@ -615,11 +655,11 @@
                     if (itemA.skipIndex !== null) {
                         const skipTarget = listAData[itemA.skipIndex];
                         action2.skip_check = `P1 ${h(itemA.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
-                        currentSkipTargetIndex = itemA.skipIndex; // (신규) 타겟 저장
+                        currentSkipTargetIndex = itemA.skipIndex; 
                     } else {
                         action2.skip_check = `P1 ${h(itemA.value)}에 스킵 포인터 없음.`;
                     }
-                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipList: 'P1', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P2', benchmarkIndex: pB });
 
                     // [단계 3: 평가 및 실행]
                     let action3 = { ...action2 };
@@ -628,23 +668,23 @@
                         
                         // [3a: 스킵 성공]
                         if (skipTarget.value <= itemB.value) {
-                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p2Text})`;
+                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p2TextBenchmark})`;
                             action3.move = `P1 포인터를 ${h(skipTarget.value)}로 점프!`;
-                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: 'P1', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P2', benchmarkIndex: pB });
                             pA = itemA.skipIndex; // 포인터 실제 이동
                         } 
                         // [3b: 스킵 실패]
                         else {
-                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p2Text})`;
+                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p2TextBenchmark})`;
                             action3.move = `P1 포인터를 한 칸 이동.`;
-                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: 'P1', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P2', benchmarkIndex: pB });
                             pA++; // 포인터 실제 이동
                         }
                     } 
                     // [3c: 스킵 포인터 없음]
                     else {
                         action3.move = `P1 포인터를 한 칸 이동.`;
-                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: null, skipList: null });
+                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: null, benchmarkList: 'P2', benchmarkIndex: pB }); // 벤치마크는 유지
                         pA++; // 포인터 실제 이동
                     }
                 } 
@@ -652,8 +692,9 @@
                 else { 
                     
                     // [단계 1: 비교]
-                    let action1 = { comparison: `${p2Text} < ${p1Text} (P2 전진 필요)` };
-                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipTargetIndex: null, skipList: null });
+                    let action1 = { comparison: `${p2Text} < ${p1TextBenchmark} (P2 전진 필요)` };
+                    // (신규) P1을 벤치마크로 설정
+                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipList: null, benchmarkList: 'P1', benchmarkIndex: pA });
                     
                     // [단계 2: 스킵 확인]
                     let action2 = { ...action1 }; 
@@ -661,11 +702,11 @@
                     if (itemB.skipIndex !== null) {
                         const skipTarget = listBData[itemB.skipIndex];
                         action2.skip_check = `P2 ${h(itemB.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
-                        currentSkipTargetIndex = itemB.skipIndex; // (신규) 타겟 저장
+                        currentSkipTargetIndex = itemB.skipIndex;
                     } else {
                         action2.skip_check = `P2 ${h(itemB.value)}에 스킵 포인터 없음.`;
                     }
-                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipList: 'P2', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P1', benchmarkIndex: pA });
                     
                     // [단계 3: 평가 및 실행]
                     let action3 = { ...action2 };
@@ -674,23 +715,23 @@
                         
                         // [3a: 스킵 성공]
                         if (skipTarget.value <= itemA.value) {
-                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p1Text})`;
+                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p1TextBenchmark})`;
                             action3.move = `P2 포인터를 ${h(skipTarget.value)}로 점프!`;
-                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: 'P2', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P1', benchmarkIndex: pA });
                             pB = itemB.skipIndex; // 포인터 실제 이동
                         } 
                         // [3b: 스킵 실패]
                         else {
-                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p1Text})`;
+                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p1TextBenchmark})`;
                             action3.move = `P2 포인터를 한 칸 이동.`;
-                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: 'P2', skipTargetIndex: currentSkipTargetIndex, benchmarkList: 'P1', benchmarkIndex: pA });
                             pB++; // 포인터 실제 이동
                         }
                     } 
                     // [3c: 스킵 포인터 없음]
                     else {
                         action3.move = `P2 포인터를 한 칸 이동.`;
-                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: null, skipList: null });
+                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipList: null, benchmarkList: 'P1', benchmarkIndex: pA }); // 벤치마크는 유지
                         pB++; // 포인터 실제 이동
                     }
                 }
@@ -700,7 +741,7 @@
             let finalAction = {};
             finalAction.comparison = '✅ 교집합 찾기 완료.';
             finalAction.move = '어느 한 리스트가 끝에 도달했습니다.';
-            history.push({ pA, pB, intersection: [...intersection], action: finalAction, addedValue: null, skipTargetIndex: null, skipList: null });
+            history.push({ pA, pB, intersection: [...intersection], action: finalAction, addedValue: null, skipList: null, benchmarkList: null });
 
             updateUI(0);
         }
@@ -708,8 +749,8 @@
 
         // --- UI Rendering Logic ---
         
-        // ⭐ [수정] renderList가 skipTargetIndex를 받도록 변경
-        function renderList(list, container, pointerIndex, skipTargetIndex) {
+        // ⭐ [수정] renderList가 benchmarkIndex를 받도록 변경
+        function renderList(list, container, pointerIndex, skipTargetIndex, benchmarkIndex) {
             container.innerHTML = '';
             list.forEach((item, index) => {
                 const wrapper = document.createElement('div');
@@ -719,21 +760,38 @@
                 node.className = 'node';
                 node.textContent = item.value;
                 
-                // 1. 현재 비교 노드 (빨간색)
+                // 1. 포인터 (항상 표시)
                 if (index === pointerIndex) {
                     const pointer = document.createElement('div');
                     pointer.className = 'pointer';
                     pointer.innerHTML = '&#9660;'; 
                     wrapper.appendChild(pointer);
-                    node.classList.add('current-compare');
-                } else if (index < pointerIndex) {
-                    node.style.backgroundColor = '#95a5aa'; // Passed
                 }
 
-                // 2. ⭐ [신규] 스킵 타겟 노드 (주황색)
+                // 2. 노드 하이라이트 (우선순위: Red > Purple > Orange)
+                // CSS에서 !important와 선언 순서로 우선순위가 관리됩니다.
+                
+                // (신규) 벤치마크 (보라색)
+                if (index === benchmarkIndex) {
+                    node.classList.add('comparison-benchmark');
+                }
+                
+                // 스킵 타겟 (주황색)
                 if (index === skipTargetIndex) {
                     node.classList.add('current-skip-target');
                 }
+
+                // 현재 포인터 (빨간색) - (가장 높은 우선순위)
+                if (index === pointerIndex) {
+                    node.classList.add('current-compare');
+                } 
+                // 위 3개에 해당 안 되는 통과한 노드
+                else if (index < pointerIndex && 
+                         index !== benchmarkIndex && 
+                         index !== skipTargetIndex) {
+                    node.style.backgroundColor = '#95a5aa'; // Passed
+                }
+
 
                 wrapper.appendChild(node);
                 
@@ -782,32 +840,32 @@
             });
         }
 
-        // ⭐ [수정] updateUI가 skipTargetIndex를 renderList로 전달
+        // ⭐ [수정] updateUI가 벤치마크 정보를 renderList로 전달
         function updateUI(currentStep) {
             const state = history[currentStep];
             if (!state || !isInitialized) {
                  return;
             }
 
-            // 1. 리스트 렌더링 (스킵 타겟 정보 전달)
+            // 1. 리스트 렌더링 (스킵 타겟/벤치마크 정보 전달)
             let skipTargetA = (state.skipList === 'P1') ? state.skipTargetIndex : null;
             let skipTargetB = (state.skipList === 'P2') ? state.skipTargetIndex : null;
+            
+            let benchmarkA = (state.benchmarkList === 'P1') ? state.benchmarkIndex : null;
+            let benchmarkB = (state.benchmarkList === 'P2') ? state.benchmarkIndex : null;
 
-            renderList(listAData, listADiv, state.pA, skipTargetA);
-            renderList(listBData, listBDiv, state.pB, skipTargetB);
+            renderList(listAData, listADiv, state.pA, skipTargetA, benchmarkA);
+            renderList(listBData, listBDiv, state.pB, skipTargetB, benchmarkB);
 
             // 2. 결과 리스트 렌더링
             renderIntersectionList(state.intersection, state.addedValue);
             
-            // 3. 단계 정보 렌더링 (스킵 포인터용으로 수정)
+            // 3. 단계 정보 렌더링
             const action = state.action;
             let stepHtml = `<div class="step-number-box">[${currentStep} / ${history.length - 1} 단계]</div>`;
             
-            // (수정) 순서대로 표시
             if (action.comparison) stepHtml += `<div class="comparison-result">${action.comparison}</div>`;
             if (action.result) stepHtml += `<div class="intersection-action-text">${action.result}</div>`;
-            
-            // 스킵 로직은 비교 이후에 표시
             if (action.skip_check) stepHtml += `<div class="skip-check">${action.skip_check}</div>`;
             
             if (action.skip_result) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연결 리스트 교집합 시각화 (가독성 최종 개선)</title>
+    <title>스킵 포인터 교집합 시각화 (자동 생성)</title>
     <style>
         /* Base Styling */
         body {
@@ -33,6 +33,7 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             order: 1;
+            align-self: flex-start; /* 높이가 달라도 위쪽 정렬 */
         }
 
         .visualization-area {
@@ -52,7 +53,7 @@
             text-align: center;
         }
 
-        /* Input Controls (변경 없음) */
+        /* Input Controls */
         .input-controls {
             padding: 20px;
             margin-bottom: 20px;
@@ -70,7 +71,8 @@
             color: #34495e;
             margin-bottom: 5px;
         }
-        .input-group input[type="text"] {
+        .input-group input[type="text"],
+        .input-group input[type="number"] { /* 숫자 입력 필드 스타일 추가 */
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -95,59 +97,56 @@
             font-weight: bold;
             margin-top: 10px;
             text-align: center;
+            line-height: 1.5;
         }
         
-        /* Step Info - 수정됨 */
+        /* Step Info - 스킵 포인터용으로 수정됨 */
         #step-info-container {
             margin-bottom: 30px;
             padding: 15px;
             border-radius: 8px;
             background-color: #f8f8f8;
             border: 1px solid #ddd;
-            text-align: center;
         }
 
         #step-info {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 10px; /* 항목 간 간격 */
             font-weight: 700;
             color: #2c3e50;
         }
         
-        /* 1. 단계 번호 박스 */
         #step-info .step-number-box {
             background-color: #3498db;
             color: white;
             padding: 5px 15px;
             border-radius: 5px;
             font-size: 1.1em;
-            margin-bottom: 10px;
-            min-width: 150px;
+            margin-bottom: 5px;
+            text-align: center;
         }
         
-        /* 2. 비교 결과 텍스트 - 폰트 크기 및 강조 조절 */
-        #step-info .comparison-result {
-            font-size: 1.05em;
-            font-weight: 600;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        /* 3. 교집합 추가 텍스트 (신규 스타일) */
-        #step-info .intersection-action-text {
-            color: #27ae60;
-            font-size: 0.95em;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        /* 4. 포인터 이동 텍스트 */
+        /* 스킵 포인터 단계별 설명 스타일 */
+        #step-info .comparison-result,
+        #step-info .intersection-action-text,
+        #step-info .skip-check,
+        #step-info .skip-success,
+        #step-info .skip-fail,
         #step-info .pointer-move-text {
-            color: #7f8c8d;
-            font-size: 0.9em;
-            font-weight: 500;
+            font-size: 1em;
+            font-weight: 600;
+            line-height: 1.4;
+            padding-left: 10px;
+            border-left: 4px solid #ccc;
         }
+
+        #step-info .comparison-result { border-color: #3498db; }
+        #step-info .intersection-action-text { border-color: #27ae60; color: #27ae60; }
+        #step-info .skip-check { border-color: #f39c12; color: #f39c12; }
+        #step-info .skip-success { border-color: #27ae60; color: #27ae60; }
+        #step-info .skip-fail { border-color: #e74c3c; color: #e74c3c; }
+        #step-info .pointer-move-text { border-color: #7f8c8d; color: #7f8c8d; }
 
         .highlight-value {
             font-weight: 800;
@@ -157,12 +156,8 @@
             border-radius: 3px;
             display: inline-block;
         }
-        .highlight-value.blue {
-            color: #2980b9;
-            border-color: #2980b9;
-        }
         
-        /* 시각화 중 컨트롤 및 재설정 버튼 (변경 없음) */
+        /* 시각화 중 컨트롤 및 재설정 버튼 */
         #viz-controls {
             display: none;
             text-align: center;
@@ -183,7 +178,7 @@
             background-color: #d35400;
         }
 
-        /* List Styling & Pointers (나머지 변경 없음) */
+        /* List Styling & Pointers (스킵 포인터용 수정) */
         .list-container {
             margin-bottom: 30px;
             padding: 15px;
@@ -202,8 +197,9 @@
 
         .list {
             display: flex;
-            gap: 10px;
-            min-height: 40px;
+            gap: 15px; /* 노드 간격 */
+            min-height: 70px; /* 스킵 정보 표시를 위해 높이 확보 */
+            flex-wrap: wrap; /* 창이 좁을 때 줄바꿈 */
         }
 
         .node-wrapper {
@@ -212,6 +208,7 @@
             flex-direction: column;
             align-items: center;
             padding-top: 20px;
+            min-width: 50px; /* 최소 너비 */
         }
         
         .pointer {
@@ -238,6 +235,18 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        /* (신규) 스킵 포인터 정보 스타일 */
+        .skip-info {
+            margin-top: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #e67e22;
+        }
+        .skip-info::before {
+            content: '↪ '; /* 화살표 아이콘 */
+            font-weight: bold;
+        }
+
         .current-compare {
             background-color: #e74c3c !important;
             transform: scale(1.05);
@@ -251,32 +260,31 @@
             border-radius: 8px;
             margin-top: 20px;
         }
-        /* Intersection Node Styling - 수정 */
+
         .intersection-node {
-            background-color: #27ae60; /* 초록색 배경 */
-            color: white; /* 흰색 폰트 */
+            background-color: #27ae60;
+            color: white;
             padding: 10px 15px;
             border-radius: 6px;
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            /* 새로 추가되는 노드에만 적용될 애니메이션 (아래 keyframes 수정) */
         }
-        /* Animation for newly added intersection nodes */
+        
         .intersection-node.added {
-            animation: add-pulse 0.5s ease-out forwards; /* forwards로 애니메이션 종료 후 상태 유지 */
+            animation: add-pulse 0.5s ease-out forwards;
         }
         @keyframes add-pulse {
             0% { 
-                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); /* 초록색 테두리 시작 */
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
                 transform: scale(0.9);
             }
             70% { 
-                box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); /* 초록색 테두리 확장 및 페이드아웃 */
+                box-shadow: 0 0 0 8px rgba(46, 204, 113, 0);
                 transform: scale(1.05);
             }
             100% { 
-                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); /* 애니메이션 종료 후 테두리 사라짐 */
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
                 transform: scale(1);
             }
         }
@@ -305,7 +313,6 @@
         .control-btn:hover {
             background: #2c3e50;
         }
-
         .control-btn:disabled {
             background: #95a5a6;
             cursor: not-allowed;
@@ -317,7 +324,7 @@
 
     <div class="main-content">
         <div class="input-area">
-            <h1>🔗 설정 및 컨트롤</h1>
+            <h1>🚀 설정 및 컨트롤</h1>
             
             <div id="input-view">
                 <div class="input-controls">
@@ -326,8 +333,12 @@
                         <input type="text" id="list-a-name" value="BRUTUS (List P1)">
                     </div>
                     <div class="input-group">
-                        <label for="list-a-values">List P1 값 (쉼표로 구분, 정렬 자동 처리)</label>
-                        <input type="text" id="list-a-values" value="1, 2, 4, 11, 31, 45, 173, 174">
+                        <label for="list-a-values">List P1 값 (쉼표로 구분, 예: 2, 4, 8)</label>
+                        <input type="text" id="list-a-values" value="2, 4, 8, 16, 19, 23, 28, 43">
+                    </div>
+                    <div class="input-group">
+                        <label for="list-a-skip">P1 스킵 간격 (n)</label>
+                        <input type="number" id="list-a-skip" value="3" min="0">
                     </div>
                     <hr>
                     <div class="input-group">
@@ -335,8 +346,12 @@
                         <input type="text" id="list-b-name" value="CAESAR (List P2)">
                     </div>
                     <div class="input-group">
-                        <label for="list-b-values">List P2 값 (쉼표로 구분, 정렬 자동 처리)</label>
-                        <input type="text" id="list-b-values" value="1, 2, 4, 5, 45, 130, 140, 173">
+                        <label for="list-b-values">List P2 값 (쉼표로 구분, 예: 1, 2, 3)</label>
+                        <input type="text" id="list-b-values" value="1, 2, 3, 5, 8, 41, 51, 60, 74, 98, 103, 111">
+                    </div>
+                    <div class="input-group">
+                        <label for="list-b-skip">P2 스킵 간격 (n)</label>
+                        <input type="number" id="list-b-skip" value="3" min="0">
                     </div>
                     <button id="visualize-btn">시각화 시작</button>
                     <div id="error-message"></div>
@@ -359,7 +374,7 @@
         </div>
 
         <div class="visualization-area">
-            <h1>📊 교집합 시각화 결과</h1>
+            <h1>📊 스킵 포인터 교집합 시각화</h1>
             
             <div class="list-container">
                 <div class="list-title" id="list-a-title">BRUTUS (List P1)</div>
@@ -379,7 +394,7 @@
     </div>
 
     <script>
-        // List Data (사용자 입력으로 변경될 변수)
+        // List Data
         let listAData = [];
         let listBData = [];
         let listAName = '';
@@ -397,56 +412,64 @@
         const visualizeBtn = document.getElementById('visualize-btn');
         const resetBtn = document.getElementById('reset-btn');
         const errorMsg = document.getElementById('error-message');
-
-        // Title Elements
         const listATitle = document.getElementById('list-a-title');
         const listBTitle = document.getElementById('list-b-title');
-
 
         // State variables
         let step = 0;
         let history = []; 
         let isInitialized = false;
 
-        // Helper function for text highlighting
-        function highlightValue(value, isBlue = false) {
-            if (value === '끝') {
-                return `<span class="highlight-value blue">${value}</span>`;
-            }
-            return `<span class="highlight-value">${value}</span>`;
-        }
+        // --- Data Processing and Validation (스킵 포인터 자동 생성 방식으로 수정) ---
 
-        // --- Data Processing and Validation ---
-
-        function processInput(inputValue, listName) {
+        /**
+         * 입력 문자열(단순 숫자 리스트)과 스킵 간격을 받아
+         * 스킵 포인터가 포함된 노드 객체 배열로 변환합니다.
+         */
+        function processInput(inputValue, listName, skipInterval) {
             errorMsg.textContent = '';
-            
             let rawNumbers = inputValue.split(',')
                                         .map(s => s.trim())
                                         .filter(s => s.length > 0);
             
-            let processedList = [];
-            let invalidFound = false;
+            let parsedList = [];
+            let lastVal = -Infinity;
 
+            // 1. 1차 파싱: 숫자 값만 파싱하여 기본 리스트 생성
             for (const s of rawNumbers) {
-                const num = parseInt(s);
+                const num = parseInt(s, 10);
                 if (isNaN(num) || String(num) !== s) {
-                    if (s !== "") {
-                        invalidFound = true;
+                     errorMsg.textContent = `[${listName}]의 '${s}' 항목이 유효한 숫자가 아닙니다.`;
+                     return null;
+                }
+
+                if (num < lastVal) {
+                    errorMsg.textContent = `[${listName}] 리스트가 오름차순으로 정렬되지 않았습니다. (오류: ${num} < ${lastVal})`;
+                    return null;
+                }
+
+                parsedList.push({ value: num, skipValue: null, skipIndex: null });
+                lastVal = num;
+            }
+
+            // 2. 2차 파싱: 스킵 포인터 자동 생성
+            // skipInterval = 3 이면, 0 -> 3, 3 -> 6, 6 -> 9 ...
+            if (skipInterval > 0) {
+                for (let i = 0; i < parsedList.length; i++) {
+                    // i가 n의 배수일 때 (0, n, 2n, ...) 포인터 생성 시도
+                    if (i % skipInterval === 0) { 
+                        let targetIndex = i + skipInterval;
+                        
+                        // 타겟이 리스트 범위 내에 있는지 확인
+                        if (targetIndex < parsedList.length) {
+                            parsedList[i].skipIndex = targetIndex;
+                            parsedList[i].skipValue = parsedList[targetIndex].value;
+                        }
                     }
-                } else {
-                    processedList.push(num);
                 }
             }
 
-            if (invalidFound) {
-                errorMsg.textContent += `경고: ${listName} 입력에 숫자가 아닌 값이 포함되어 제외되었습니다. `;
-            }
-
-            processedList.sort((a, b) => a - b);
-            processedList = Array.from(new Set(processedList));
-
-            return processedList;
+            return parsedList;
         }
 
         // --- Core Logic ---
@@ -454,48 +477,44 @@
         function loadNewData() {
             const nameA = document.getElementById('list-a-name').value.trim();
             const valuesA = document.getElementById('list-a-values').value.trim();
+            const skipA = parseInt(document.getElementById('list-a-skip').value, 10) || 0; // 스킵 간격 읽기
+
             const nameB = document.getElementById('list-b-name').value.trim();
             const valuesB = document.getElementById('list-b-values').value.trim();
+            const skipB = parseInt(document.getElementById('list-b-skip').value, 10) || 0; // 스킵 간격 읽기
 
-            listAData = processInput(valuesA, nameA);
-            listBData = processInput(valuesB, nameB);
+            listAData = processInput(valuesA, nameA, skipA); // 'skipA' 전달
+            listBData = processInput(valuesB, nameB, skipB); // 'skipB' 전달
             
+            // 하나라도 파싱 실패 시 중단
+            if (listAData === null || listBData === null) {
+                isInitialized = false;
+                resetVisualizationUI(false); // UI만 초기화
+                return;
+            }
+
             listAName = nameA;
             listBName = nameB;
 
             listATitle.textContent = listAName;
             listBTitle.textContent = listBName;
-
-            if (listAData.length === 0 && listBData.length === 0 && (valuesA.length > 0 || valuesB.length > 0)) {
-                 errorMsg.textContent = '입력된 모든 값이 유효하지 않거나 비어있습니다. 숫자를 입력해주세요.';
-                 isInitialized = false;
-            } else if (listAData.length === 0 && listBData.length === 0) {
-                isInitialized = false;
-            } else {
-                errorMsg.textContent = '';
-                isInitialized = true;
-                generateSteps();
-                
-                // 🚀 성공 시 레이아웃 전환
-                inputView.style.display = 'none';
-                vizControls.style.display = 'block';
-                return;
-            }
             
-            // 로드 실패 시 UI 초기화
-            stepInfo.innerHTML = '시각화 시작 버튼을 눌러주세요.';
-            listADiv.innerHTML = '';
-            listBDiv.innerHTML = '';
-            resultDiv.innerHTML = '';
-            prevBtn.disabled = true;
-            nextBtn.disabled = true;
+            isInitialized = true;
+            generateSteps();
+            
+            // 🚀 성공 시 레이아웃 전환
+            inputView.style.display = 'none';
+            vizControls.style.display = 'block';
         }
 
         function resetVisualization() {
             // 🔄 레이아웃 전환
             inputView.style.display = 'block';
             vizControls.style.display = 'none';
-            
+            resetVisualizationUI(true);
+        }
+
+        function resetVisualizationUI(clearInputs) {
             // 상태 초기화
             isInitialized = false;
             step = 0;
@@ -507,25 +526,31 @@
             listADiv.innerHTML = '';
             listBDiv.innerHTML = '';
             resultDiv.innerHTML = '';
-            listATitle.textContent = document.getElementById('list-a-name').value.trim();
-            listBTitle.textContent = document.getElementById('list-b-name').value.trim();
+            
+            if (clearInputs) {
+                listATitle.textContent = document.getElementById('list-a-name').value.trim();
+                listBTitle.textContent = document.getElementById('list-b-name').value.trim();
+                errorMsg.textContent = '';
+            }
             
             // 컨트롤 초기화
             prevBtn.disabled = true;
             nextBtn.disabled = true;
             stepInfo.innerHTML = '시각화 시작 버튼을 눌러주세요.';
-            errorMsg.textContent = '';
         }
 
 
-        // --- Step Generation Logic (Action 문자열 생성 로직 수정) ---
-
+        // --- Step Generation Logic (스킵 포인터 알고리즘) ---
+        // (이 부분은 이전 코드와 동일하게 작동합니다. processInput의 결과물에 의존)
         function generateSteps() {
             let pA = 0;
             let pB = 0;
             let intersection = [];
             history = [];
             step = 0;
+
+            // Helper for highlighting
+            const h = (val) => `<span class="highlight-value">${val}</span>`;
 
             // Initial state (Step 0)
             history.push({
@@ -534,99 +559,109 @@
                 intersection: [],
                 action: {
                     comparison: 'P1과 P2의 첫 노드를 비교할 준비가 되었습니다.',
-                    intersection: '',
                     move: '준비 완료'
                 },
-                addedValue: null,
-                movedPointer: null
+                addedValue: null
             });
 
             while (pA < listAData.length && pB < listBData.length) {
-                let currentA = listAData[pA];
-                let currentB = listBData[pB];
+                let itemA = listAData[pA];
+                let itemB = listBData[pB];
                 let addedValue = null;
                 let action = {};
-                let movedPointer = null;
                 
-                let comparisonText = '';
-                let intersectionText = '';
-                let pointerMoveText = '';
-                
-                const p1Node = highlightValue(currentA);
-                const p2Node = highlightValue(currentB);
-                
-                const p1CompText = `${listAName}의 ${p1Node}`;
-                const p2CompText = `${listBName}의 ${p2Node}`;
+                const p1Text = `${listAName} ${h(itemA.value)}`;
+                const p2Text = `${listBName} ${h(itemB.value)}`;
 
-                if (currentA === currentB) {
-                    addedValue = currentA;
-                    intersection.push(currentA);
+                if (itemA.value === itemB.value) {
+                    addedValue = itemA.value;
+                    intersection.push(itemA.value); // 수정: itemA.value 사용
                     
-                    comparisonText = `${p1CompText}와<br>${p2CompText}가 같습니다.`; 
-                    intersectionText = `교집합에 추가.`;
-                    pointerMoveText = `P1 포인터 이동 | P2 포인터 이동`;
-                    movedPointer = 'Both';
-                    pA++;
-                    pB++;
-                } else if (currentA < currentB) {
-                    comparisonText = `${p1CompText}가<br>${p2CompText}보다 작습니다.`; 
-                    intersectionText = '';
-                    pointerMoveText = `P1 포인터 이동`;
-                    movedPointer = 'P1';
-                    pA++;
-                } else {
-                    comparisonText = `${p2CompText}가<br>${p1CompText}보다 작습니다.`; 
-                    intersectionText = '';
-                    pointerMoveText = `P2 포인터 이동`;
-                    movedPointer = 'P2';
-                    pB++;
-                }
-                
-                action.comparison = comparisonText;
-                action.intersection = intersectionText;
-                action.move = pointerMoveText;
+                    action.comparison = `${p1Text} == ${p2Text}`;
+                    action.result = `✅ 일치! 교집합에 ${h(itemA.value)} 추가.`;
+                    action.move = `P1 포인터 이동 | P2 포인터 이동`;
 
-                history.push({
-                    pA: pA, 
-                    pB: pB, 
-                    intersection: [...intersection],
-                    action: action,
-                    addedValue: addedValue,
-                    movedPointer: movedPointer
-                });
+                    history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                    pA++;
+                    pB++;
+                } 
+                else if (itemA.value < itemB.value) {
+                    action.comparison = `${p1Text} < ${p2Text} (P1 전진 필요)`;
+                    
+                    // 스킵 포인터 확인 (P1)
+                    if (itemA.skipIndex !== null) {
+                        const skipTarget = listAData[itemA.skipIndex];
+                        action.skip_check = `P1 ${h(itemA.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
+                        
+                        // 스킵 조건 확인 (안전한 점프)
+                        if (skipTarget.value <= itemB.value) {
+                            action.skip_result = `✅ 스킵 성공! (${h(skipTarget.value)} <= ${h(itemB.value)})`;
+                            action.move = `P1 포인터를 ${h(skipTarget.value)} (index ${itemA.skipIndex})로 점프!`;
+                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                            pA = itemA.skipIndex;
+                        } else {
+                            action.skip_result = `❌ 스킵 실패! (${h(skipTarget.value)} > ${h(itemB.value)})`;
+                            action.move = `P1 포인터를 한 칸 이동.`;
+                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                            pA++;
+                        }
+                    } else {
+                        action.skip_check = `P1 ${h(itemA.value)}에 스킵 포인터 없음.`;
+                        action.move = `P1 포인터를 한 칸 이동.`;
+                        history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                        pA++;
+                    }
+                } 
+                else { // itemB.value < itemA.value
+                    action.comparison = `${p2Text} < ${p1Text} (P2 전진 필요)`;
+                    
+                    // 스킵 포인터 확인 (P2)
+                    if (itemB.skipIndex !== null) {
+                        const skipTarget = listBData[itemB.skipIndex];
+                        action.skip_check = `P2 ${h(itemB.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
+                        
+                        // 스킵 조건 확인 (안전한 점프)
+                        if (skipTarget.value <= itemA.value) {
+                            action.skip_result = `✅ 스킵 성공! (${h(skipTarget.value)} <= ${h(itemA.value)})`;
+                            action.move = `P2 포인터를 ${h(skipTarget.value)} (index ${itemB.skipIndex})로 점프!`;
+                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                            pB = itemB.skipIndex;
+                        } else {
+                            action.skip_result = `❌ 스킵 실패! (${h(skipTarget.value)} > ${h(itemA.value)})`;
+                            action.move = `P2 포인터를 한 칸 이동.`;
+                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                            pB++;
+                        }
+                    } else {
+                        action.skip_check = `P2 ${h(itemB.value)}에 스킵 포인터 없음.`;
+                        action.move = `P2 포인터를 한 칸 이동.`;
+                        history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                        pB++;
+                    }
+                }
             }
             
+            // Final state
             let finalAction = {};
             finalAction.comparison = '✅ 교집합 찾기 완료.';
-            finalAction.intersection = '';
-            finalAction.move = '어느 한 리스트가 끝났습니다.';
-            if (intersection.length === 0) {
-                 finalAction.move += ' (교집합 결과 없음)';
-            }
-
-            history.push({
-                pA: pA,
-                pB: pB,
-                intersection: [...intersection],
-                action: finalAction,
-                addedValue: null,
-                movedPointer: null
-            });
+            finalAction.move = '어느 한 리스트가 끝에 도달했습니다.';
+            history.push({ pA, pB, intersection: [...intersection], action: finalAction, addedValue: null });
 
             updateUI(0);
         }
 
-        // --- UI Rendering Logic ---
+        // --- UI Rendering Logic (스킵 포인터용 수정) ---
+        // (이 부분은 이전 코드와 동일하게 작동합니다)
         
         function renderList(list, container, pointerIndex) {
             container.innerHTML = '';
-            list.forEach((value, index) => {
+            list.forEach((item, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'node-wrapper';
 
                 const node = document.createElement('div');
                 node.className = 'node';
-                node.textContent = value;
+                node.textContent = item.value;
                 
                 if (index === pointerIndex) {
                     const pointer = document.createElement('div');
@@ -635,13 +670,23 @@
                     wrapper.appendChild(pointer);
                     node.classList.add('current-compare');
                 } else if (index < pointerIndex) {
-                    node.style.backgroundColor = '#95a5aa'; 
+                    node.style.backgroundColor = '#95a5aa'; // Passed
                 }
 
                 wrapper.appendChild(node);
+                
+                // (신규) 스킵 포인터 정보 렌더링
+                if (item.skipValue !== null) {
+                    const skipInfo = document.createElement('div');
+                    skipInfo.className = 'skip-info';
+                    skipInfo.textContent = item.skipValue;
+                    wrapper.appendChild(skipInfo);
+                }
+
                 container.appendChild(wrapper);
             });
             
+            // 리스트의 끝에 도달했을 때 "끝" 노드 표시
             if (pointerIndex >= list.length) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'node-wrapper';
@@ -664,10 +709,10 @@
             resultDiv.innerHTML = '';
             intersection.forEach((value, index) => {
                 const node = document.createElement('div');
-                node.className = 'intersection-node'; // 기본 클래스
+                node.className = 'intersection-node';
                 
                 if (value === addedValue && index === intersection.length - 1) {
-                    node.classList.add('added'); // 새로 추가된 노드에 'added' 클래스 추가
+                    node.classList.add('added');
                 }
                 
                 node.textContent = value;
@@ -682,18 +727,31 @@
                  return;
             }
 
+            // 1. 리스트 렌더링
             renderList(listAData, listADiv, state.pA);
             renderList(listBData, listBDiv, state.pB);
 
+            // 2. 결과 리스트 렌더링
             renderIntersectionList(state.intersection, state.addedValue);
             
-            const stepNumberHTML = `<div class="step-number-box">[${currentStep} / ${history.length - 1} 단계]</div>`;
-            const comparisonHTML = `<div class="comparison-result">${state.action.comparison}</div>`;
-            const intersectionActionHTML = state.action.intersection ? `<div class="intersection-action-text">${state.action.intersection}</div>` : '';
-            const moveHTML = `<div class="pointer-move-text">${state.action.move}</div>`;
+            // 3. 단계 정보 렌더링 (스킵 포인터용으로 수정)
+            const action = state.action;
+            let stepHtml = `<div class="step-number-box">[${currentStep} / ${history.length - 1} 단계]</div>`;
             
-            stepInfo.innerHTML = stepNumberHTML + comparisonHTML + intersectionActionHTML + moveHTML;
+            if (action.comparison) stepHtml += `<div class="comparison-result">${action.comparison}</div>`;
+            if (action.result) stepHtml += `<div class="intersection-action-text">${action.result}</div>`;
+            if (action.skip_check) stepHtml += `<div class="skip-check">${action.skip_check}</div>`;
             
+            if (action.skip_result) {
+                const resultClass = action.skip_result.includes('✅') ? 'skip-success' : 'skip-fail';
+                stepHtml += `<div class="${resultClass}">${action.skip_result}</div>`;
+            }
+            
+            if (action.move) stepHtml += `<div class="pointer-move-text">${action.move}</div>`;
+            
+            stepInfo.innerHTML = stepHtml;
+            
+            // 4. 버튼 활성화
             prevBtn.disabled = currentStep === 0;
             nextBtn.disabled = currentStep === history.length - 1;
         }
@@ -717,7 +775,7 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', resetVisualization);
+        document.addEventListener('DOMContentLoaded', () => resetVisualizationUI(true));
     </script>
 </body>
 </html>

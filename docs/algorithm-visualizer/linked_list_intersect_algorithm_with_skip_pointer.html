@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스킵 포인터 교집합 시각화 (자동 생성)</title>
+    <title>스킵 포인터 교집합 시각화 (타겟 강조)</title>
     <style>
         /* Base Styling */
         body {
@@ -253,6 +253,19 @@
             box-shadow: 0 0 0 3px #e74c3c, 0 2px 4px rgba(0,0,0,0.3);
         }
 
+        /* ⭐ [신규] 스킵 타겟 강조 스타일 */
+        .current-skip-target {
+            background-color: #f39c12 !important; /* 주황색 배경 */
+            animation: skip-target-pulse 1s infinite;
+            transform: scale(1.05);
+        }
+        @keyframes skip-target-pulse {
+            0% { box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(243, 156, 18, 0.3); }
+            100% { box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.7); }
+        }
+
+
         #result-list {
             min-height: 50px;
             background-color: #bdc3c7;
@@ -420,7 +433,7 @@
         let history = []; 
         let isInitialized = false;
 
-        // --- Data Processing and Validation (스킵 포인터 자동 생성 방식으로 수정) ---
+        // --- Data Processing and Validation ---
 
         /**
          * 입력 문자열(단순 숫자 리스트)과 스킵 간격을 받아
@@ -447,7 +460,8 @@
                     errorMsg.textContent = `[${listName}] 리스트가 오름차순으로 정렬되지 않았습니다. (오류: ${num} < ${lastVal})`;
                     return null;
                 }
-
+                
+                // (수정) skipIndex: null을 기본값으로 포함
                 parsedList.push({ value: num, skipValue: null, skipIndex: null });
                 lastVal = num;
             }
@@ -460,7 +474,7 @@
                     if (i % skipInterval === 0) { 
                         let targetIndex = i + skipInterval;
                         
-                        // 타겟이 리스트 범위 내에 있는지 확인
+                        // (수정) 타겟이 리스트 범위 '내'에 있는지 확인
                         if (targetIndex < parsedList.length) {
                             parsedList[i].skipIndex = targetIndex;
                             parsedList[i].skipValue = parsedList[targetIndex].value;
@@ -540,8 +554,7 @@
         }
 
 
-        // --- Step Generation Logic (스킵 포인터 알고리즘) ---
-        // (이 부분은 이전 코드와 동일하게 작동합니다. processInput의 결과물에 의존)
+        // --- Step Generation Logic (⭐ 시각화를 위해 history에 skipTargetIndex 추가) ---
         function generateSteps() {
             let pA = 0;
             let pB = 0;
@@ -561,82 +574,124 @@
                     comparison: 'P1과 P2의 첫 노드를 비교할 준비가 되었습니다.',
                     move: '준비 완료'
                 },
-                addedValue: null
+                addedValue: null,
+                skipTargetIndex: null, // (신규)
+                skipList: null       // (신규)
             });
 
             while (pA < listAData.length && pB < listBData.length) {
                 let itemA = listAData[pA];
                 let itemB = listBData[pB];
                 let addedValue = null;
-                let action = {};
                 
                 const p1Text = `${listAName} ${h(itemA.value)}`;
                 const p2Text = `${listBName} ${h(itemB.value)}`;
 
+                // === CASE 1: MATCH ===
                 if (itemA.value === itemB.value) {
                     addedValue = itemA.value;
-                    intersection.push(itemA.value); // 수정: itemA.value 사용
+                    intersection.push(itemA.value);
                     
-                    action.comparison = `${p1Text} == ${p2Text}`;
-                    action.result = `✅ 일치! 교집합에 ${h(itemA.value)} 추가.`;
-                    action.move = `P1 포인터 이동 | P2 포인터 이동`;
-
-                    history.push({ pA, pB, intersection: [...intersection], action, addedValue });
+                    let action = {
+                        comparison: `${p1Text} == ${p2Text}`,
+                        result: `✅ 일치! 교집합에 ${h(itemA.value)} 추가.`,
+                        move: `P1 포인터 이동 | P2 포인터 이동`
+                    };
+                    // '일치'는 하나의 단계로 처리
+                    history.push({ pA, pB, intersection: [...intersection], action, addedValue, skipTargetIndex: null, skipList: null });
                     pA++;
                     pB++;
                 } 
+                // === CASE 2: P1 < P2 (P1 전진 필요) ===
                 else if (itemA.value < itemB.value) {
-                    action.comparison = `${p1Text} < ${p2Text} (P1 전진 필요)`;
                     
-                    // 스킵 포인터 확인 (P1)
+                    // [단계 1: 비교]
+                    let action1 = { comparison: `${p1Text} < ${p2Text} (P1 전진 필요)` };
+                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipTargetIndex: null, skipList: null });
+                    
+                    // [단계 2: 스킵 확인]
+                    let action2 = { ...action1 };
+                    let currentSkipTargetIndex = null;
                     if (itemA.skipIndex !== null) {
                         const skipTarget = listAData[itemA.skipIndex];
-                        action.skip_check = `P1 ${h(itemA.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
-                        
-                        // 스킵 조건 확인 (안전한 점프)
-                        if (skipTarget.value <= itemB.value) {
-                            action.skip_result = `✅ 스킵 성공! (${h(skipTarget.value)} <= ${h(itemB.value)})`;
-                            action.move = `P1 포인터를 ${h(skipTarget.value)} (index ${itemA.skipIndex})로 점프!`;
-                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                            pA = itemA.skipIndex;
-                        } else {
-                            action.skip_result = `❌ 스킵 실패! (${h(skipTarget.value)} > ${h(itemB.value)})`;
-                            action.move = `P1 포인터를 한 칸 이동.`;
-                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                            pA++;
-                        }
+                        action2.skip_check = `P1 ${h(itemA.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
+                        currentSkipTargetIndex = itemA.skipIndex; // (신규) 타겟 저장
                     } else {
-                        action.skip_check = `P1 ${h(itemA.value)}에 스킵 포인터 없음.`;
-                        action.move = `P1 포인터를 한 칸 이동.`;
-                        history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                        pA++;
+                        action2.skip_check = `P1 ${h(itemA.value)}에 스킵 포인터 없음.`;
+                    }
+                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+
+                    // [단계 3: 평가 및 실행]
+                    let action3 = { ...action2 };
+                    if (itemA.skipIndex !== null) {
+                        const skipTarget = listAData[itemA.skipIndex];
+                        
+                        // [3a: 스킵 성공]
+                        if (skipTarget.value <= itemB.value) {
+                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p2Text})`;
+                            action3.move = `P1 포인터를 ${h(skipTarget.value)}로 점프!`;
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+                            pA = itemA.skipIndex; // 포인터 실제 이동
+                        } 
+                        // [3b: 스킵 실패]
+                        else {
+                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p2Text})`;
+                            action3.move = `P1 포인터를 한 칸 이동.`;
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P1' });
+                            pA++; // 포인터 실제 이동
+                        }
+                    } 
+                    // [3c: 스킵 포인터 없음]
+                    else {
+                        action3.move = `P1 포인터를 한 칸 이동.`;
+                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: null, skipList: null });
+                        pA++; // 포인터 실제 이동
                     }
                 } 
-                else { // itemB.value < itemA.value
-                    action.comparison = `${p2Text} < ${p1Text} (P2 전진 필요)`;
+                // === CASE 3: P2 < P1 (P2 전진 필요) ===
+                else { 
                     
-                    // 스킵 포인터 확인 (P2)
+                    // [단계 1: 비교]
+                    let action1 = { comparison: `${p2Text} < ${p1Text} (P2 전진 필요)` };
+                    history.push({ pA, pB, intersection: [...intersection], action: action1, addedValue: null, skipTargetIndex: null, skipList: null });
+                    
+                    // [단계 2: 스킵 확인]
+                    let action2 = { ...action1 }; 
+                    let currentSkipTargetIndex = null;
                     if (itemB.skipIndex !== null) {
                         const skipTarget = listBData[itemB.skipIndex];
-                        action.skip_check = `P2 ${h(itemB.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
-                        
-                        // 스킵 조건 확인 (안전한 점프)
-                        if (skipTarget.value <= itemA.value) {
-                            action.skip_result = `✅ 스킵 성공! (${h(skipTarget.value)} <= ${h(itemA.value)})`;
-                            action.move = `P2 포인터를 ${h(skipTarget.value)} (index ${itemB.skipIndex})로 점프!`;
-                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                            pB = itemB.skipIndex;
-                        } else {
-                            action.skip_result = `❌ 스킵 실패! (${h(skipTarget.value)} > ${h(itemA.value)})`;
-                            action.move = `P2 포인터를 한 칸 이동.`;
-                            history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                            pB++;
-                        }
+                        action2.skip_check = `P2 ${h(itemB.value)}에 스킵(->${h(skipTarget.value)}) 발견!`;
+                        currentSkipTargetIndex = itemB.skipIndex; // (신규) 타겟 저장
                     } else {
-                        action.skip_check = `P2 ${h(itemB.value)}에 스킵 포인터 없음.`;
-                        action.move = `P2 포인터를 한 칸 이동.`;
-                        history.push({ pA, pB, intersection: [...intersection], action, addedValue });
-                        pB++;
+                        action2.skip_check = `P2 ${h(itemB.value)}에 스킵 포인터 없음.`;
+                    }
+                    history.push({ pA, pB, intersection: [...intersection], action: action2, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                    
+                    // [단계 3: 평가 및 실행]
+                    let action3 = { ...action2 };
+                    if (itemB.skipIndex !== null) {
+                        const skipTarget = listBData[itemB.skipIndex];
+                        
+                        // [3a: 스킵 성공]
+                        if (skipTarget.value <= itemA.value) {
+                            action3.skip_result = `✅ 스킵 성공! (목표 ${h(skipTarget.value)} <= ${p1Text})`;
+                            action3.move = `P2 포인터를 ${h(skipTarget.value)}로 점프!`;
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                            pB = itemB.skipIndex; // 포인터 실제 이동
+                        } 
+                        // [3b: 스킵 실패]
+                        else {
+                            action3.skip_result = `❌ 스킵 실패! (목표 ${h(skipTarget.value)} > ${p1Text})`;
+                            action3.move = `P2 포인터를 한 칸 이동.`;
+                            history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: currentSkipTargetIndex, skipList: 'P2' });
+                            pB++; // 포인터 실제 이동
+                        }
+                    } 
+                    // [3c: 스킵 포인터 없음]
+                    else {
+                        action3.move = `P2 포인터를 한 칸 이동.`;
+                        history.push({ pA, pB, intersection: [...intersection], action: action3, addedValue: null, skipTargetIndex: null, skipList: null });
+                        pB++; // 포인터 실제 이동
                     }
                 }
             }
@@ -645,15 +700,16 @@
             let finalAction = {};
             finalAction.comparison = '✅ 교집합 찾기 완료.';
             finalAction.move = '어느 한 리스트가 끝에 도달했습니다.';
-            history.push({ pA, pB, intersection: [...intersection], action: finalAction, addedValue: null });
+            history.push({ pA, pB, intersection: [...intersection], action: finalAction, addedValue: null, skipTargetIndex: null, skipList: null });
 
             updateUI(0);
         }
 
-        // --- UI Rendering Logic (스킵 포인터용 수정) ---
-        // (이 부분은 이전 코드와 동일하게 작동합니다)
+
+        // --- UI Rendering Logic ---
         
-        function renderList(list, container, pointerIndex) {
+        // ⭐ [수정] renderList가 skipTargetIndex를 받도록 변경
+        function renderList(list, container, pointerIndex, skipTargetIndex) {
             container.innerHTML = '';
             list.forEach((item, index) => {
                 const wrapper = document.createElement('div');
@@ -663,6 +719,7 @@
                 node.className = 'node';
                 node.textContent = item.value;
                 
+                // 1. 현재 비교 노드 (빨간색)
                 if (index === pointerIndex) {
                     const pointer = document.createElement('div');
                     pointer.className = 'pointer';
@@ -673,9 +730,14 @@
                     node.style.backgroundColor = '#95a5aa'; // Passed
                 }
 
+                // 2. ⭐ [신규] 스킵 타겟 노드 (주황색)
+                if (index === skipTargetIndex) {
+                    node.classList.add('current-skip-target');
+                }
+
                 wrapper.appendChild(node);
                 
-                // (신규) 스킵 포인터 정보 렌더링
+                // 3. 스킵 정보 (↪ 텍스트)
                 if (item.skipValue !== null) {
                     const skipInfo = document.createElement('div');
                     skipInfo.className = 'skip-info';
@@ -720,16 +782,19 @@
             });
         }
 
-
+        // ⭐ [수정] updateUI가 skipTargetIndex를 renderList로 전달
         function updateUI(currentStep) {
             const state = history[currentStep];
             if (!state || !isInitialized) {
                  return;
             }
 
-            // 1. 리스트 렌더링
-            renderList(listAData, listADiv, state.pA);
-            renderList(listBData, listBDiv, state.pB);
+            // 1. 리스트 렌더링 (스킵 타겟 정보 전달)
+            let skipTargetA = (state.skipList === 'P1') ? state.skipTargetIndex : null;
+            let skipTargetB = (state.skipList === 'P2') ? state.skipTargetIndex : null;
+
+            renderList(listAData, listADiv, state.pA, skipTargetA);
+            renderList(listBData, listBDiv, state.pB, skipTargetB);
 
             // 2. 결과 리스트 렌더링
             renderIntersectionList(state.intersection, state.addedValue);
@@ -738,8 +803,11 @@
             const action = state.action;
             let stepHtml = `<div class="step-number-box">[${currentStep} / ${history.length - 1} 단계]</div>`;
             
+            // (수정) 순서대로 표시
             if (action.comparison) stepHtml += `<div class="comparison-result">${action.comparison}</div>`;
             if (action.result) stepHtml += `<div class="intersection-action-text">${action.result}</div>`;
+            
+            // 스킵 로직은 비교 이후에 표시
             if (action.skip_check) stepHtml += `<div class="skip-check">${action.skip_check}</div>`;
             
             if (action.skip_result) {

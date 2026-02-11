@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Convolution Final</title>
+    <style>
+        :root {
+            --cell-w: 60px;
+            --cell-h: 60px; /* 라벨 공간 확보를 위해 조금 늘림 */
+            --header-w: 140px;
+            
+            --c-blue: #2563eb;
+            --c-red: #dc2626;
+            --c-purple: #9333ea;
+            --c-green: #16a34a;
+            --bg-gray: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #fff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 1. 설명 패널 (복구됨) --- */
+        .description-panel {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--bg-gray);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .description-panel h2 { margin: 0 0 10px 0; font-size: 20px; color: #1e293b; }
+        .description-panel p { margin: 0; font-size: 14px; color: #64748b; line-height: 1.6; }
+        
+        .legend { margin-top: 15px; display: flex; gap: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; font-size: 12px; color: #475569; font-weight: bold; }
+        .dot { width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; }
+
+        /* --- 2. 대시보드 (컨트롤 + 점수) --- */
+        .dashboard {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .control-box {
+            flex: 1;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #333;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+        }
+        input[type=number] {
+            font-size: 36px;
+            font-weight: 900;
+            width: 120px;
+            text-align: center;
+            border: none;
+            border-bottom: 3px solid #333;
+            outline: none;
+            color: #333;
+            background: transparent;
+        }
+
+        .score-board {
+            flex: 2;
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .score-val { font-size: 56px; font-weight: 900; color: #4ade80; line-height: 1; }
+        .score-sub { font-size: 13px; opacity: 0.7; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- 3. 격자 시스템 --- */
+        .scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            padding-bottom: 10px;
+        }
+
+        .grid-wrapper {
+            display: inline-block;
+            min-width: 100%;
+            padding-right: 20px;
+        }
+
+        .grid-row {
+            display: flex;
+            height: var(--cell-h);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .row-header {
+            position: sticky;
+            left: 0;
+            width: var(--header-w);
+            height: var(--cell-h);
+            background: #f8fafc;
+            border-right: 2px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            padding-right: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 50;
+            flex-shrink: 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+
+        .cell {
+            width: var(--cell-w);
+            height: var(--cell-h);
+            border-right: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: #cbd5e1;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        /* --- Row Styles --- */
+        .axis-row { height: 30px; }
+        .axis-row .row-header { height: 30px; }
+        .axis-row .cell { height: 30px; color: #64748b; font-weight: bold; border-bottom: 2px solid #333; }
+
+        .input-cell.pill {
+            background: var(--c-blue);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Filter Track */
+        .filter-track {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .filter-strip {
+            position: absolute;
+            top: 0;
+            height: var(--cell-h);
+            display: flex;
+            transition: left 0.15s ease-out;
+            pointer-events: none;
+        }
+        .f-cell {
+            width: var(--cell-w);
+            height: var(--cell-h);
+            border: 1px dashed var(--c-red);
+            background: rgba(254, 226, 226, 0.5);
+            color: var(--c-red);
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+        /* 필터 시간 라벨 (t=0, t=-1) */
+        .f-time-label {
+            font-size: 9px;
+            font-weight: bold;
+            background: #fee2e2;
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            color: #991b1b;
+        }
+
+        .f-cell.head {
+            border: 2px solid var(--c-red);
+            background: #fee2e2;
+            font-weight: bold;
+        }
+
+        /* Intermediate */
+        .mul-cell.scan-range {
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+        }
+        .mul-cell.active {
+            background: #f3e8ff;
+            color: var(--c-purple);
+            font-weight: bold;
+            border: 2px solid var(--c-purple);
+            font-size: 14px;
+        }
+
+        /* Output */
+        .out-cell.result {
+            background: #dcfce7;
+            color: var(--c-green);
+            font-weight: 800;
+            font-size: 18px;
+            border: 3px solid var(--c-green);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="description-panel">
+        <h2>💊 약효 시뮬레이션 (0시 ~ 24시)</h2>
+        <p>
+            <strong>입력값:</strong> 9시, 13시, 20시에 약을 복용했습니다. (1회분 = 1)<br>
+            <strong>필터값:</strong> 시간이 지날수록 약효가 10%씩 떨어집니다. (10시간 지속)<br>
+            <strong>사용법:</strong> 아래 입력창에 시간을 입력하면 <strong>스캐너(필터)</strong>가 이동하며 현재 잔존량을 계산합니다.
+        </p>
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:var(--c-blue)"></div>입력(투약)</div>
+            <div class="legend-item"><div class="dot" style="background:var(--c-red)"></div>필터(감소)</div>
+            <div class="legend-item"><div class="dot" style="background:var(--c-purple)"></div>개별잔존</div>
+            <div class="legend-item"><div class="dot" style="background:var(--c-green)"></div>최종결과</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="control-box">
+            <label>현재 시각 (0~24)</label>
+            <input type="number" id="timeInput" value="0" min="0" max="24" oninput="validity.valid||(value='');">
+        </div>
+
+        <div class="score-board">
+            <div class="score-val" id="totalScore">0</div>
+            <div class="score-sub">Current Total Effect (y[n])</div>
+        </div>
+    </div>
+
+    <div class="scroll-container">
+        <div class="grid-wrapper">
+            
+            <div class="grid-row axis-row" id="rowAxis">
+                <div class="row-header">Time (k)</div>
+            </div>
+
+            <div class="grid-row" id="rowInput">
+                <div class="row-header" style="color:var(--c-blue)">
+                    1. 입력 신호
+                    <small>파란색: 알약 섭취</small>
+                </div>
+            </div>
+
+            <div class="grid-row">
+                <div class="row-header" style="color:var(--c-red)">
+                    2. 약효 필터
+                    <small>빨간색: 스캐너</small>
+                </div>
+                <div class="filter-track">
+                    <div id="filterStrip" class="filter-strip"></div>
+                </div>
+            </div>
+
+            <div class="grid-row" id="rowMul">
+                <div class="row-header" style="color:var(--c-purple)">
+                    3. 개별 잔존량
+                    <small>범위 전체 표시</small>
+                </div>
+            </div>
+
+            <div class="grid-row" id="rowOut">
+                <div class="row-header" style="color:var(--c-green)">
+                    4. 합계 위치
+                    <small>최종 결과</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    // --- 설정 ---
+    const MAX_TIME = 26; 
+    const CELL_W = 60;   
+    
+    const inputs = { 9: 1, 13: 1, 20: 1 };
+    
+    const kernel = [];
+    for(let i=0; i<=10; i++) kernel.push(Math.max(0, 100 - i*10));
+
+    // --- DOM ---
+    const rowAxis = document.getElementById('rowAxis');
+    const rowInput = document.getElementById('rowInput');
+    const rowMul = document.getElementById('rowMul');
+    const rowOut = document.getElementById('rowOut');
+    const filterStrip = document.getElementById('filterStrip');
+    const timeInput = document.getElementById('timeInput');
+    const totalScore = document.getElementById('totalScore');
+
+    function init() {
+        for(let k=0; k<MAX_TIME; k++) {
+            // Axis
+            const ax = document.createElement('div');
+            ax.className = 'cell';
+            ax.innerText = k;
+            rowAxis.appendChild(ax);
+
+            // Input
+            const inp = document.createElement('div');
+            inp.className = 'cell input-cell';
+            if(inputs[k]) {
+                inp.classList.add('pill');
+                inp.innerText = "1";
+            } else {
+                inp.innerText = "0";
+            }
+            rowInput.appendChild(inp);
+
+            // Mul
+            const mul = document.createElement('div');
+            mul.className = 'cell mul-cell';
+            mul.id = `mul-${k}`;
+            rowMul.appendChild(mul);
+
+            // Out
+            const out = document.createElement('div');
+            out.className = 'cell out-cell';
+            out.id = `out-${k}`;
+            rowOut.appendChild(out);
+        }
+
+        // 필터 스트립 (Head = Rightmost = index 0)
+        filterStrip.style.width = (kernel.length * CELL_W) + 'px';
+        
+        for(let i=kernel.length-1; i>=0; i--) {
+            const f = document.createElement('div');
+            f.className = 'f-cell';
+            if(i===0) f.classList.add('head');
+            
+            // t=0, t=-1 표시 추가
+            const tLabel = (i === 0) ? "t=0 (Now)" : `t=-${i}`;
+            
+            f.innerHTML = `
+                <div class="f-time-label">${tLabel}</div>
+                <div>${kernel[i]}%</div>
+            `;
+            filterStrip.appendChild(f);
+        }
+
+        update();
+    }
+
+    function update() {
+        let n = parseInt(timeInput.value);
+        if(isNaN(n)) n = 0;
+        if(n < 0) n = 0;
+        if(n > 24) n = 24; 
+        timeInput.value = n;
+
+        // 필터 이동
+        const stripWidth = kernel.length * CELL_W;
+        const targetLeft = ((n + 1) * CELL_W) - stripWidth;
+        filterStrip.style.left = targetLeft + 'px';
+
+        // 계산 로직
+        document.querySelectorAll('.mul-cell').forEach(c => {
+            c.className = 'cell mul-cell';
+            c.innerText = "";
+        });
+        document.querySelectorAll('.out-cell').forEach(c => {
+            c.className = 'cell out-cell';
+            c.innerText = "";
+        });
+
+        let sum = 0;
+        const startK = n - kernel.length + 1;
+        const endK = n;
+
+        for (let k = startK; k <= endK; k++) {
+            if (k >= 0 && k < MAX_TIME) {
+                const mulCell = document.getElementById(`mul-${k}`);
+                const hIdx = n - k;
+                const filterVal = kernel[hIdx];
+                const inputVal = inputs[k] || 0;
+                const product = inputVal * filterVal;
+
+                mulCell.classList.add('scan-range');
+                
+                if (inputVal === 1) {
+                    mulCell.classList.add('active');
+                    mulCell.innerText = product;
+                    sum += product;
+                } else {
+                    mulCell.innerText = "0";
+                }
+            }
+        }
+
+        const outCell = document.getElementById(`out-${n}`);
+        if(outCell) {
+            outCell.classList.add('result');
+            outCell.innerText = sum;
+            
+            // Auto scroll logic (optional)
+            if (n > 5) {
+                const scrollPos = (n * CELL_W) - 300; 
+                // document.querySelector('.scroll-container').scrollLeft = scrollPos;
+            }
+        }
+
+        totalScore.innerText = sum;
+    }
+
+    timeInput.addEventListener('input', update);
+    init();
+
+</script>
+</body>
+</html>

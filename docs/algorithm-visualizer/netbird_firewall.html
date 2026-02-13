@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netbird 방화벽 우회 시각화 (Flicker Fixed)</title>
+    <title>Netbird 방화벽 우회 시각화 (Tooltip Fixed)</title>
     <style>
         /* --- 기본 설정 --- */
         body {
@@ -83,7 +83,6 @@
             transition: opacity 0.3s;
         }
 
-        /* 외부 클라이언트 그룹 (왼쪽) */
         .client-group {
             position: absolute; left: 30px; top: 100px; bottom: 100px;
             display: flex; flex-direction: column; justify-content: space-around; width: 100px; z-index: 20;
@@ -95,7 +94,6 @@
             font-size: 0.75em; font-weight: bold; color: #495057; opacity: 0;
         }
         
-        /* 일반 접속 시도 클라이언트 (Step 1용) */
         #client-generic { width: 120px; height: 60px; top: 220px; left: 100px; border-color: #dc3545; color: #dc3545; display: none; }
         
         /* Netbird Router (NC1) - Public Zone */
@@ -113,7 +111,7 @@
             border-color: #0d6efd; color: #0d6efd; 
         }
 
-        /* --- 방화벽 (중앙 경계선) --- */
+        /* --- 방화벽 --- */
         #firewall {
             position: absolute; 
             left: 50%; top: 40px; bottom: 40px; width: 16px;
@@ -200,9 +198,7 @@
         </div>
 
         <div id="client-generic" class="node">Generic Client<br>(접속 시도)</div>
-        
         <div id="nc1" class="node">Netbird<br>Router (Relay)</div>
-        
         <div id="server" class="node">Internal Server<br>(Target)</div>
 
         <div id="tunnel">
@@ -219,14 +215,21 @@
     </div>
 
     <script>
-        // --- 상태 관리 ---
+        // =========================================================
+        // [설정 변수] 여기서 애니메이션 속도를 조절하세요
+        // =========================================================
+        const CONFIG = {
+            packetSpeed: 1500, 
+            firewallWait: 800, 
+            fastExchangeSpeed: 400
+        };
+        // =========================================================
+
         let currentStep = 0;
         const totalSteps = 5;
-        
         let activeTimeouts = [];
         let activeAnimationFrames = [];
 
-        // --- 요소 참조 ---
         const uiStatusText = document.getElementById('status-text');
         const uiStepBadge = document.getElementById('step-badge');
         const btnPrev = document.getElementById('btn-prev');
@@ -243,10 +246,7 @@
             document.getElementById('ext1'), document.getElementById('ext2'), document.getElementById('ext3')
         ];
 
-        // --- 초기화 유틸리티 ---
-        function registerTimeout(id) {
-            activeTimeouts.push(id);
-        }
+        function registerTimeout(id) { activeTimeouts.push(id); }
 
         function clearAllAnimations() {
             activeTimeouts.forEach(id => clearTimeout(id));
@@ -267,16 +267,11 @@
             };
         }
 
-        // --- 패킷 이동 함수 ---
         function movePacket(packet, startX, startY, endX, endY, duration, tooltipText = null) {
             return new Promise(resolve => {
                 const startTime = performance.now();
-                
-                // [수정됨] 패킷 위치를 먼저 설정하고
                 packet.style.left = startX + 'px';
                 packet.style.top = startY + 'px';
-                
-                // [수정됨] 그 다음에 화면에 추가 (깜빡임 방지)
                 container.appendChild(packet);
 
                 if (tooltipText) {
@@ -321,21 +316,18 @@
             mark.style.left = (x - 20) + 'px';
             mark.style.top = (y - 25) + 'px';
             mark.style.opacity = 1;
-            registerTimeout(setTimeout(() => mark.style.opacity = 0, 800));
+            registerTimeout(setTimeout(() => mark.style.opacity = 0, CONFIG.firewallWait));
         }
 
         function wait(ms) {
             return new Promise(resolve => registerTimeout(setTimeout(resolve, ms)));
         }
 
-        // --- 단계 제어 ---
         function changeStep(delta) {
             clearAllAnimations();
-
             currentStep += delta;
             if (currentStep < 0) currentStep = 0;
             if (currentStep > totalSteps) currentStep = totalSteps;
-
             updateUI();
             registerTimeout(setTimeout(setupScene, 50));
         }
@@ -344,7 +336,6 @@
             btnPrev.disabled = currentStep === 0;
             btnNext.disabled = currentStep === totalSteps;
             uiStepBadge.textContent = `Step ${currentStep} / ${totalSteps}`;
-            
             const titles = [
                 "준비 상태",
                 "1. 일반 접속 시도 (Inbound 차단)",
@@ -362,46 +353,33 @@
             elExtClients.forEach(c => c.style.opacity = 0);
             tunnel.style.opacity = 0;
 
-            if (currentStep === 1) {
-                elGeneric.style.display = 'flex';
-                loopStep1();
-            } else if (currentStep === 2) {
-                elNc1.style.opacity = 1;
-                loopStep2();
-            } else if (currentStep === 3) {
-                elNc1.style.opacity = 1;
-                loopStep3();
-            } else if (currentStep === 4) {
-                elNc1.style.opacity = 1;
-                tunnel.style.opacity = 1;
-                loopStep4();
-            } else if (currentStep === 5) {
-                elNc1.style.opacity = 1;
-                tunnel.style.opacity = 1;
-                elExtClients.forEach(c => c.style.opacity = 1);
-                loopStep5();
-            }
+            if (currentStep === 1) { elGeneric.style.display = 'flex'; loopStep1(); }
+            else if (currentStep === 2) { elNc1.style.opacity = 1; loopStep2(); }
+            else if (currentStep === 3) { elNc1.style.opacity = 1; loopStep3(); }
+            else if (currentStep === 4) { elNc1.style.opacity = 1; tunnel.style.opacity = 1; loopStep4(); }
+            else if (currentStep === 5) { elNc1.style.opacity = 1; tunnel.style.opacity = 1; elExtClients.forEach(c => c.style.opacity = 1); loopStep5(); }
         }
 
-        // --- 시나리오 로직 ---
+        // --- 시나리오 로직 (CONFIG 적용됨) ---
 
-        // Step 1: Inbound 차단 (Generic -> Firewall)
+        // Step 1: Inbound 차단
         async function loopStep1() {
             if (currentStep !== 1) return;
-
             const start = getPos(elGeneric);
             const fwPos = getPos(firewall);
-            
-            const p = createPacket('#dc3545'); // Red
+            const p = createPacket('#dc3545'); 
 
-            const reached = await movePacket(p, start.x, start.y, fwPos.x - 10, start.y, 800, "Inbound 요청");
+            const reached = await movePacket(p, start.x, start.y, fwPos.x - 10, start.y, CONFIG.packetSpeed, "Inbound 요청 (client->server)");
             
             if (!reached || currentStep !== 1) { p.remove(); return; }
 
             tooltip.textContent = "⛔ 차단됨";
+            // [수정 포인트] 텍스트 변경 후 너비가 달라지므로 위치를 즉시 재조정
+            updateTooltipPos(fwPos.x - 10, start.y);
+
             showBlockMark(fwPos.x - 10, start.y);
             
-            await wait(800); 
+            await wait(CONFIG.firewallWait); 
             p.remove();
             tooltip.style.opacity = 0;
 
@@ -409,47 +387,46 @@
             loopStep1();
         }
 
-        // Step 2: Outbound Init (Server -> Router)
+        // Step 2: Outbound Init
         async function loopStep2() {
             if (currentStep !== 2) return;
-
-            const sPos = getPos(elServer); // Inside (Right)
-            const rPos = getPos(elNc1);    // Outside (Left)
+            const sPos = getPos(elServer); 
+            const rPos = getPos(elNc1);    
             const fwPos = getPos(firewall);
 
-            // 1. Request: Server(Right) -> NC1(Left)
-            const p1 = createPacket('#198754'); // Green
+            // 1. Request
+            const p1 = createPacket('#198754'); 
             
-            // 1-A. Server -> Firewall
-            let reached = await movePacket(p1, sPos.x, sPos.y, fwPos.x + 10, sPos.y, 800, "Outbound 요청");
+            let reached = await movePacket(p1, sPos.x, sPos.y, fwPos.x + 10, sPos.y, CONFIG.packetSpeed, "Outbound 요청 (client<-server)");
             if (!reached || currentStep !== 2) { p1.remove(); return; }
 
-            // 1-B. Firewall Check
             tooltip.textContent = "✅ 허용 (내부→외부)";
-            await wait(800);
+            // [추가] 텍스트 변경 후 위치 재조정
+            updateTooltipPos(fwPos.x + 10, sPos.y);
 
-            // 1-C. Firewall -> Router
+            await wait(CONFIG.firewallWait);
+
             if (currentStep !== 2) { p1.remove(); return; }
-            reached = await movePacket(p1, fwPos.x + 10, sPos.y, rPos.x, rPos.y, 500, "전송 중...");
+            reached = await movePacket(p1, fwPos.x + 10, sPos.y, rPos.x, rPos.y, CONFIG.packetSpeed * 0.6, "Outbound 요청 (client<-server)");
             p1.remove();
             tooltip.style.opacity = 0;
 
             await wait(300);
 
-            // 2. Response: Router(Left) -> Server(Right)
-            const p2 = createPacket('#0d6efd'); // Blue
+            // 2. Response
+            const p2 = createPacket('#0d6efd'); 
             
-            // 2-A. Router -> Firewall
-            reached = await movePacket(p2, rPos.x, rPos.y, fwPos.x - 10, rPos.y, 800, "응답 (Inbound)");
+            reached = await movePacket(p2, rPos.x, rPos.y, fwPos.x - 10, rPos.y, CONFIG.packetSpeed, "요청에 따른 응답");
             if (!reached || currentStep !== 2) { p2.remove(); return; }
 
-            // 2-B. Firewall Check (Stateful)
             tooltip.textContent = "✅ 자동 허용 (Established)";
-            await wait(800);
+             // [추가] 텍스트 변경 후 위치 재조정
+            updateTooltipPos(fwPos.x - 10, rPos.y);
 
-            // 2-C. Firewall -> Server
+            await wait(CONFIG.firewallWait);
+
             if (currentStep !== 2) { p2.remove(); return; }
-            reached = await movePacket(p2, fwPos.x - 10, rPos.y, sPos.x, sPos.y, 500, "도착");
+            reached = await movePacket(p2, fwPos.x - 10, rPos.y, sPos.x, sPos.y, CONFIG.packetSpeed * 0.6, "요청에 따른 응답");
             p2.remove();
             tooltip.style.opacity = 0;
 
@@ -457,24 +434,21 @@
             loopStep2();
         }
 
-        // Step 3: Hole Punching (Left <-> Right)
+        // Step 3: Hole Punching
         function loopStep3() {
             if (currentStep !== 3) return;
-            const sPos = getPos(elServer); // Right
-            const rPos = getPos(elNc1);    // Left
-            
+            const sPos = getPos(elServer);
+            const rPos = getPos(elNc1);
             tooltip.style.opacity = 0;
-
             const p1 = createPacket('#198754');
             const p2 = createPacket('#0d6efd');
 
-            // Cross firing
-            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, 400).then(() => p1.remove());
+            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, CONFIG.fastExchangeSpeed).then(() => p1.remove());
             registerTimeout(setTimeout(() => {
-                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, 400).then(() => p2.remove());
+                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, CONFIG.fastExchangeSpeed).then(() => p2.remove());
             }, 200));
 
-            registerTimeout(setTimeout(loopStep3, 500));
+            registerTimeout(setTimeout(loopStep3, CONFIG.fastExchangeSpeed + 100));
         }
 
         // Step 4: Tunnel Traffic
@@ -482,66 +456,57 @@
             if (currentStep !== 4) return;
             const sPos = getPos(elServer);
             const rPos = getPos(elNc1);
-            
             tooltip.style.opacity = 0;
 
-            const p1 = createPacket('#0f5132'); // Dark Green
-            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, 1000).then(() => p1.remove());
+            const p1 = createPacket('#0f5132'); 
+            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, CONFIG.packetSpeed * 1.2).then(() => p1.remove());
 
             registerTimeout(setTimeout(() => {
                 const p2 = createPacket('#0f5132');
-                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, 1000).then(() => p2.remove());
+                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, CONFIG.packetSpeed * 1.2).then(() => p2.remove());
             }, 1000));
             
             registerTimeout(setTimeout(loopStep4, 2200));
         }
 
-        // Step 5: External Routing (Ext -> Router -> Server)
+        // Step 5: External Routing
         function loopStep5() {
             if (currentStep !== 5) return;
-            
             const colors = ['#6610f2', '#fd7e14', '#0dcaf0'];
             let delay = 0;
             
             elExtClients.forEach((client, idx) => {
                 registerTimeout(setTimeout(() => {
                     if (currentStep !== 5) return;
-                    
                     const cPos = getPos(client);
                     const rPos = getPos(elNc1);
                     const sPos = getPos(elServer);
                     const col = colors[idx];
-
                     const p = createPacket(col);
                     
-                    // 1. Ext -> Router
-                    movePacket(p, cPos.x, cPos.y, rPos.x, rPos.y, 600)
-                    // 2. Router -> Server (Through Tunnel)
-                    .then(() => movePacket(p, rPos.x, rPos.y, sPos.x, sPos.y, 600))
-                    // Wait processing
+                    const speed = CONFIG.packetSpeed * 0.8;
+
+                    movePacket(p, cPos.x, cPos.y, rPos.x, rPos.y, speed)
+                    .then(() => movePacket(p, rPos.x, rPos.y, sPos.x, sPos.y, speed))
                     .then(() => wait(200))
-                    // 3. Server -> Router (Return)
-                    .then(() => movePacket(p, sPos.x, sPos.y, rPos.x, rPos.y, 600))
-                    // 4. Router -> Ext (Return)
-                    .then(() => movePacket(p, rPos.x, rPos.y, cPos.x, cPos.y, 600))
+                    .then(() => movePacket(p, sPos.x, sPos.y, rPos.x, rPos.y, speed))
+                    .then(() => movePacket(p, rPos.x, rPos.y, cPos.x, cPos.y, speed))
                     .then(() => p.remove());
 
                 }, delay));
-                delay += 1200;
+                delay += (CONFIG.packetSpeed * 1.5);
             });
 
-            registerTimeout(setTimeout(loopStep5, 4000));
+            registerTimeout(setTimeout(loopStep5, delay + 2000));
         }
 
         function createPacket(color) {
             const p = document.createElement('div');
             p.className = 'packet';
             p.style.backgroundColor = color;
-            // [수정됨] 여기서 바로 append하지 않음
             return p;
         }
 
-        // Start
         updateUI();
     </script>
 </body>

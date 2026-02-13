@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netbird 방화벽 우회 시각화 (Flicker Fixed)</title>
+    <style>
+        /* --- 기본 설정 --- */
+        body {
+            font-family: 'Pretendard', 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h2 { margin-bottom: 10px; color: #0d6efd; font-weight: 800; }
+
+        /* --- UI 컨트롤 --- */
+        .status-header { text-align: center; margin-bottom: 20px; }
+        #step-badge {
+            display: inline-block; padding: 5px 12px;
+            background-color: #e9ecef; border-radius: 20px;
+            font-size: 0.85em; font-weight: bold; color: #495057; margin-bottom: 8px;
+        }
+        #status-text { font-size: 1.2em; font-weight: bold; height: 30px; }
+        
+        .controls { margin-top: 20px; display: flex; gap: 15px; }
+        button {
+            padding: 10px 20px; font-size: 1em; font-weight: bold;
+            border: none; border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #btn-prev { background-color: #e9ecef; color: #495057; }
+        #btn-next { background-color: #0d6efd; color: white; }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* --- 시각화 캔버스 --- */
+        .scene {
+            position: relative;
+            width: 900px; height: 500px;
+            background-color: #ffffff;
+            border: 2px solid #dee2e6; border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        /* --- 구역(Zone) 표시 --- */
+        .zone-label {
+            position: absolute; bottom: 15px; font-size: 0.9em; font-weight: bold; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .zone-public { left: 20px; color: #6c757d; }
+        
+        /* Private Zone 박스 (오른쪽 절반) */
+        .private-zone-box {
+            position: absolute;
+            top: 20px; bottom: 20px; right: 20px; left: 50%; /* 화면 절반부터 시작 */
+            border: 2px dashed #dee2e6;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            z-index: 1;
+        }
+        .zone-private-label {
+            position: absolute; bottom: 15px; right: 20px;
+            font-size: 0.9em; font-weight: bold; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* --- 객체 (Nodes) - Z-Index: 20 --- */
+        .node {
+            position: absolute;
+            background: #fff;
+            border: 3px solid #333;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; font-size: 0.8em; font-weight: bold;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: opacity 0.3s;
+        }
+
+        /* 외부 클라이언트 그룹 (왼쪽) */
+        .client-group {
+            position: absolute; left: 30px; top: 100px; bottom: 100px;
+            display: flex; flex-direction: column; justify-content: space-around; width: 100px; z-index: 20;
+        }
+        .ext-client {
+            width: 100px; height: 50px; background: #fff;
+            border: 2px dashed #adb5bd; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75em; font-weight: bold; color: #495057; opacity: 0;
+        }
+        
+        /* 일반 접속 시도 클라이언트 (Step 1용) */
+        #client-generic { width: 120px; height: 60px; top: 220px; left: 100px; border-color: #dc3545; color: #dc3545; display: none; }
+        
+        /* Netbird Router (NC1) - Public Zone */
+        #nc1 { 
+            width: 120px; height: 70px; 
+            top: 215px; left: 250px; /* 방화벽 왼쪽 */
+            border-color: #198754; color: #198754; 
+            opacity: 0; 
+        }
+
+        /* Internal Server (NC2) - Private Zone */
+        #server { 
+            width: 120px; height: 70px; 
+            top: 215px; right: 100px; /* 방화벽 오른쪽 깊숙이 */
+            border-color: #0d6efd; color: #0d6efd; 
+        }
+
+        /* --- 방화벽 (중앙 경계선) --- */
+        #firewall {
+            position: absolute; 
+            left: 50%; top: 40px; bottom: 40px; width: 16px;
+            background: repeating-linear-gradient(45deg, #ffcdd2, #ffcdd2 10px, #e53935 10px, #e53935 20px);
+            border: 3px solid #c62828;
+            transform: translateX(-50%);
+            z-index: 5;
+        }
+        #firewall-label {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            color: #c62828; font-weight: 800; background: #fff;
+            padding: 4px 12px; border-radius: 20px; border: 1px solid #c62828;
+            z-index: 6; white-space: nowrap; font-size: 0.85em;
+        }
+
+        /* --- 터널 (WireGuard) --- */
+        #tunnel {
+            position: absolute;
+            top: 240px;
+            left: 310px; /* NC1 연결 */
+            right: 160px; /* Server 연결 */
+            height: 20px;
+            background-color: #d1e7dd;
+            border-top: 4px solid #198754;
+            border-bottom: 4px solid #198754;
+            z-index: 10;
+            opacity: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        #tunnel-text { font-size: 0.8em; color: #0f5132; font-weight: bold; background: rgba(255,255,255,0.8); padding: 0 5px; }
+
+        /* --- 패킷 & 툴팁 --- */
+        .packet {
+            position: absolute; width: 16px; height: 16px;
+            border-radius: 50%; border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 30;
+        }
+        
+        #info-tooltip {
+            position: absolute;
+            background: rgba(33, 37, 41, 0.95); color: #fff;
+            padding: 8px 12px; border-radius: 6px;
+            font-size: 0.85em; font-weight: bold;
+            z-index: 40; pointer-events: none;
+            opacity: 0; white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        #info-tooltip::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
+            border-width: 6px; border-style: solid;
+            border-color: rgba(33, 37, 41, 0.95) transparent transparent transparent;
+        }
+
+        .blocked-mark {
+            position: absolute; color: #dc3545; font-size: 40px; font-weight: 900;
+            z-index: 40; opacity: 0; text-shadow: 2px 2px 0px #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h2>Netbird 방화벽 우회 프로세스</h2>
+    
+    <div class="status-header">
+        <div id="step-badge">Ready</div>
+        <div id="status-text">시작하려면 '다음' 버튼을 누르세요.</div>
+    </div>
+
+    <div class="scene" id="scene">
+        <div class="zone-label zone-public">Public Network (Internet)</div>
+        <div class="private-zone-box">
+            <div class="zone-private-label">Private Network (Internal)</div>
+        </div>
+
+        <div id="firewall-label">Firewall (Inbound Block)</div>
+        <div id="firewall"></div>
+
+        <div class="client-group">
+            <div id="ext1" class="ext-client" style="border-color: #6610f2; color: #6610f2;">Ext Client A</div>
+            <div id="ext2" class="ext-client" style="border-color: #fd7e14; color: #fd7e14;">Ext Client B</div>
+            <div id="ext3" class="ext-client" style="border-color: #0dcaf0; color: #0dcaf0;">Ext Client C</div>
+        </div>
+
+        <div id="client-generic" class="node">Generic Client<br>(접속 시도)</div>
+        
+        <div id="nc1" class="node">Netbird<br>Router (Relay)</div>
+        
+        <div id="server" class="node">Internal Server<br>(Target)</div>
+
+        <div id="tunnel">
+            <span id="tunnel-text">Encrypted Tunnel</span>
+        </div>
+
+        <div id="info-tooltip"></div>
+        <div id="block-mark" class="blocked-mark">X</div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-prev" onclick="changeStep(-1)" disabled>◀ 이전</button>
+        <button id="btn-next" onclick="changeStep(1)">다음 ▶</button>
+    </div>
+
+    <script>
+        // --- 상태 관리 ---
+        let currentStep = 0;
+        const totalSteps = 5;
+        
+        let activeTimeouts = [];
+        let activeAnimationFrames = [];
+
+        // --- 요소 참조 ---
+        const uiStatusText = document.getElementById('status-text');
+        const uiStepBadge = document.getElementById('step-badge');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const container = document.getElementById('scene');
+        const firewall = document.getElementById('firewall');
+        const tunnel = document.getElementById('tunnel');
+        const tooltip = document.getElementById('info-tooltip');
+
+        const elGeneric = document.getElementById('client-generic');
+        const elNc1 = document.getElementById('nc1');
+        const elServer = document.getElementById('server');
+        const elExtClients = [
+            document.getElementById('ext1'), document.getElementById('ext2'), document.getElementById('ext3')
+        ];
+
+        // --- 초기화 유틸리티 ---
+        function registerTimeout(id) {
+            activeTimeouts.push(id);
+        }
+
+        function clearAllAnimations() {
+            activeTimeouts.forEach(id => clearTimeout(id));
+            activeTimeouts = [];
+            activeAnimationFrames.forEach(id => cancelAnimationFrame(id));
+            activeAnimationFrames = [];
+            document.querySelectorAll('.packet').forEach(p => p.remove());
+            tooltip.style.opacity = 0;
+            document.getElementById('block-mark').style.opacity = 0;
+        }
+
+        function getPos(elem) {
+            const rect = elem.getBoundingClientRect();
+            const contRect = container.getBoundingClientRect();
+            return {
+                x: rect.left - contRect.left + rect.width / 2,
+                y: rect.top - contRect.top + rect.height / 2
+            };
+        }
+
+        // --- 패킷 이동 함수 ---
+        function movePacket(packet, startX, startY, endX, endY, duration, tooltipText = null) {
+            return new Promise(resolve => {
+                const startTime = performance.now();
+                
+                // [수정됨] 패킷 위치를 먼저 설정하고
+                packet.style.left = startX + 'px';
+                packet.style.top = startY + 'px';
+                
+                // [수정됨] 그 다음에 화면에 추가 (깜빡임 방지)
+                container.appendChild(packet);
+
+                if (tooltipText) {
+                    tooltip.textContent = tooltipText;
+                    tooltip.style.opacity = 1;
+                    updateTooltipPos(startX, startY);
+                }
+
+                function animate(time) {
+                    if (!document.body.contains(packet)) { resolve(false); return; }
+
+                    let progress = (time - startTime) / duration;
+                    if (progress > 1) progress = 1;
+
+                    const curX = startX + (endX - startX) * progress;
+                    const curY = startY + (endY - startY) * progress;
+
+                    packet.style.left = (curX - 8) + 'px';
+                    packet.style.top = (curY - 8) + 'px';
+
+                    if (tooltipText) updateTooltipPos(curX, curY);
+
+                    if (progress < 1) {
+                        const animId = requestAnimationFrame(animate);
+                        activeAnimationFrames.push(animId);
+                    } else {
+                        resolve(true); 
+                    }
+                }
+                const animId = requestAnimationFrame(animate);
+                activeAnimationFrames.push(animId);
+            });
+        }
+
+        function updateTooltipPos(x, y) {
+            tooltip.style.left = (x - tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = (y - 50) + 'px';
+        }
+
+        function showBlockMark(x, y) {
+            const mark = document.getElementById('block-mark');
+            mark.style.left = (x - 20) + 'px';
+            mark.style.top = (y - 25) + 'px';
+            mark.style.opacity = 1;
+            registerTimeout(setTimeout(() => mark.style.opacity = 0, 800));
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => registerTimeout(setTimeout(resolve, ms)));
+        }
+
+        // --- 단계 제어 ---
+        function changeStep(delta) {
+            clearAllAnimations();
+
+            currentStep += delta;
+            if (currentStep < 0) currentStep = 0;
+            if (currentStep > totalSteps) currentStep = totalSteps;
+
+            updateUI();
+            registerTimeout(setTimeout(setupScene, 50));
+        }
+
+        function updateUI() {
+            btnPrev.disabled = currentStep === 0;
+            btnNext.disabled = currentStep === totalSteps;
+            uiStepBadge.textContent = `Step ${currentStep} / ${totalSteps}`;
+            
+            const titles = [
+                "준비 상태",
+                "1. 일반 접속 시도 (Inbound 차단)",
+                "2. Outbound 연결 시작 (Server → Router)",
+                "3. 지속적인 패킷 교환 (Hole Punching)",
+                "4. 터널 생성 (방화벽 우회)",
+                "5. 외부 클라이언트 라우팅"
+            ];
+            uiStatusText.textContent = titles[currentStep];
+        }
+
+        function setupScene() {
+            elGeneric.style.display = 'none';
+            elNc1.style.opacity = 0;
+            elExtClients.forEach(c => c.style.opacity = 0);
+            tunnel.style.opacity = 0;
+
+            if (currentStep === 1) {
+                elGeneric.style.display = 'flex';
+                loopStep1();
+            } else if (currentStep === 2) {
+                elNc1.style.opacity = 1;
+                loopStep2();
+            } else if (currentStep === 3) {
+                elNc1.style.opacity = 1;
+                loopStep3();
+            } else if (currentStep === 4) {
+                elNc1.style.opacity = 1;
+                tunnel.style.opacity = 1;
+                loopStep4();
+            } else if (currentStep === 5) {
+                elNc1.style.opacity = 1;
+                tunnel.style.opacity = 1;
+                elExtClients.forEach(c => c.style.opacity = 1);
+                loopStep5();
+            }
+        }
+
+        // --- 시나리오 로직 ---
+
+        // Step 1: Inbound 차단 (Generic -> Firewall)
+        async function loopStep1() {
+            if (currentStep !== 1) return;
+
+            const start = getPos(elGeneric);
+            const fwPos = getPos(firewall);
+            
+            const p = createPacket('#dc3545'); // Red
+
+            const reached = await movePacket(p, start.x, start.y, fwPos.x - 10, start.y, 800, "Inbound 요청");
+            
+            if (!reached || currentStep !== 1) { p.remove(); return; }
+
+            tooltip.textContent = "⛔ 차단됨";
+            showBlockMark(fwPos.x - 10, start.y);
+            
+            await wait(800); 
+            p.remove();
+            tooltip.style.opacity = 0;
+
+            await wait(500);
+            loopStep1();
+        }
+
+        // Step 2: Outbound Init (Server -> Router)
+        async function loopStep2() {
+            if (currentStep !== 2) return;
+
+            const sPos = getPos(elServer); // Inside (Right)
+            const rPos = getPos(elNc1);    // Outside (Left)
+            const fwPos = getPos(firewall);
+
+            // 1. Request: Server(Right) -> NC1(Left)
+            const p1 = createPacket('#198754'); // Green
+            
+            // 1-A. Server -> Firewall
+            let reached = await movePacket(p1, sPos.x, sPos.y, fwPos.x + 10, sPos.y, 800, "Outbound 요청");
+            if (!reached || currentStep !== 2) { p1.remove(); return; }
+
+            // 1-B. Firewall Check
+            tooltip.textContent = "✅ 허용 (내부→외부)";
+            await wait(800);
+
+            // 1-C. Firewall -> Router
+            if (currentStep !== 2) { p1.remove(); return; }
+            reached = await movePacket(p1, fwPos.x + 10, sPos.y, rPos.x, rPos.y, 500, "전송 중...");
+            p1.remove();
+            tooltip.style.opacity = 0;
+
+            await wait(300);
+
+            // 2. Response: Router(Left) -> Server(Right)
+            const p2 = createPacket('#0d6efd'); // Blue
+            
+            // 2-A. Router -> Firewall
+            reached = await movePacket(p2, rPos.x, rPos.y, fwPos.x - 10, rPos.y, 800, "응답 (Inbound)");
+            if (!reached || currentStep !== 2) { p2.remove(); return; }
+
+            // 2-B. Firewall Check (Stateful)
+            tooltip.textContent = "✅ 자동 허용 (Established)";
+            await wait(800);
+
+            // 2-C. Firewall -> Server
+            if (currentStep !== 2) { p2.remove(); return; }
+            reached = await movePacket(p2, fwPos.x - 10, rPos.y, sPos.x, sPos.y, 500, "도착");
+            p2.remove();
+            tooltip.style.opacity = 0;
+
+            await wait(800);
+            loopStep2();
+        }
+
+        // Step 3: Hole Punching (Left <-> Right)
+        function loopStep3() {
+            if (currentStep !== 3) return;
+            const sPos = getPos(elServer); // Right
+            const rPos = getPos(elNc1);    // Left
+            
+            tooltip.style.opacity = 0;
+
+            const p1 = createPacket('#198754');
+            const p2 = createPacket('#0d6efd');
+
+            // Cross firing
+            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, 400).then(() => p1.remove());
+            registerTimeout(setTimeout(() => {
+                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, 400).then(() => p2.remove());
+            }, 200));
+
+            registerTimeout(setTimeout(loopStep3, 500));
+        }
+
+        // Step 4: Tunnel Traffic
+        function loopStep4() {
+            if (currentStep !== 4) return;
+            const sPos = getPos(elServer);
+            const rPos = getPos(elNc1);
+            
+            tooltip.style.opacity = 0;
+
+            const p1 = createPacket('#0f5132'); // Dark Green
+            movePacket(p1, sPos.x, sPos.y, rPos.x, rPos.y, 1000).then(() => p1.remove());
+
+            registerTimeout(setTimeout(() => {
+                const p2 = createPacket('#0f5132');
+                movePacket(p2, rPos.x, rPos.y, sPos.x, sPos.y, 1000).then(() => p2.remove());
+            }, 1000));
+            
+            registerTimeout(setTimeout(loopStep4, 2200));
+        }
+
+        // Step 5: External Routing (Ext -> Router -> Server)
+        function loopStep5() {
+            if (currentStep !== 5) return;
+            
+            const colors = ['#6610f2', '#fd7e14', '#0dcaf0'];
+            let delay = 0;
+            
+            elExtClients.forEach((client, idx) => {
+                registerTimeout(setTimeout(() => {
+                    if (currentStep !== 5) return;
+                    
+                    const cPos = getPos(client);
+                    const rPos = getPos(elNc1);
+                    const sPos = getPos(elServer);
+                    const col = colors[idx];
+
+                    const p = createPacket(col);
+                    
+                    // 1. Ext -> Router
+                    movePacket(p, cPos.x, cPos.y, rPos.x, rPos.y, 600)
+                    // 2. Router -> Server (Through Tunnel)
+                    .then(() => movePacket(p, rPos.x, rPos.y, sPos.x, sPos.y, 600))
+                    // Wait processing
+                    .then(() => wait(200))
+                    // 3. Server -> Router (Return)
+                    .then(() => movePacket(p, sPos.x, sPos.y, rPos.x, rPos.y, 600))
+                    // 4. Router -> Ext (Return)
+                    .then(() => movePacket(p, rPos.x, rPos.y, cPos.x, cPos.y, 600))
+                    .then(() => p.remove());
+
+                }, delay));
+                delay += 1200;
+            });
+
+            registerTimeout(setTimeout(loopStep5, 4000));
+        }
+
+        function createPacket(color) {
+            const p = document.createElement('div');
+            p.className = 'packet';
+            p.style.backgroundColor = color;
+            // [수정됨] 여기서 바로 append하지 않음
+            return p;
+        }
+
+        // Start
+        updateUI();
+    </script>
+</body>
+</html>

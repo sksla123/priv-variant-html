@@ -23,7 +23,7 @@
         }
         .header h1 {
             font-size: 28px;
-            color: #232F3E; /* AWS 네이비 색상 */
+            color: #232F3E;
             margin: 0 0 10px 0;
         }
         .header p {
@@ -38,7 +38,7 @@
             width: 100%;
             max-width: 1200px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
+            /* overflow: hidden; 툴팁이 잘리지 않도록 제거 */
         }
         .top-section {
             display: grid;
@@ -57,7 +57,7 @@
         }
         .block h3 {
             font-size: 16px;
-            color: #FF9900; /* AWS 오렌지 색상 */
+            color: #FF9900;
             margin-top: 0;
             margin-bottom: 15px;
             font-weight: 700;
@@ -83,6 +83,73 @@
             font-weight: bold;
         }
         
+        /* 마우스 호버 효과 및 툴팁 CSS */
+        .hover-item {
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dashed #999;
+            transition: color 0.2s ease;
+        }
+        .hover-item:hover {
+            color: #FF9900;
+            border-bottom-color: #FF9900;
+        }
+        .logo-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            left: 14px;
+            margin-top: 10px;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            z-index: 100;
+            white-space: nowrap;
+            pointer-events: none; /* 툴팁 위에서 마우스 깜빡임 방지 */
+        }
+        .logo-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 10px;
+            height: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #d1d5db;
+            border-left: 1px solid #d1d5db;
+            transform: rotate(45deg);
+        }
+        .hover-item:hover .logo-tooltip {
+            visibility: visible;
+            opacity: 1;
+            margin-top: 8px;
+        }
+        .logo-tooltip .logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .logo-tooltip img {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+            max-width: 80px;
+        }
+        .logo-tooltip span {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
         /* CSS Grid를 활용한 9블록 배치 */
         .kp { grid-row: 1 / 3; grid-column: 1 / 2; }
         .ka { grid-row: 1 / 2; grid-column: 2 / 3; }
@@ -101,15 +168,6 @@
         }
         .cst { grid-column: 1 / 2; border-right: 2px solid #232F3E; }
         .rs { grid-column: 2 / 3; border-right: none; }
-        
-        .source {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #888;
-            text-align: right;
-            width: 100%;
-            max-width: 1200px;
-        }
     </style>
 </head>
 <body>
@@ -122,11 +180,67 @@
             <div class="block kp">
                 <h3>핵심 파트너 (Key Partners)</h3>
                 <ul>
-                    <li>독립 소프트웨어 벤더 (ISV)</li>
-                    <li>시스템 통합 업체 (SI) 및 기술 컨설팅 파트너</li>
-                    <li>하드웨어 제조업체 (Intel, NVIDIA, AMD 등)</li>
-                    <li>오픈소스 커뮤니티 및 기술 표준화 재단</li>
-                    <li>APN (AWS Partner Network) 소속 기업</li>
+                    <li>
+                        <span class="hover-item">독립 소프트웨어 벤더 (ISV)
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://i.namu.wiki/i/hEpj5_HS7wZ_b-7gVbRgOxTbv18hBOChwX6IWBW1tKYB5gHPZH3pAPWl5kprex7p5LmAbUX9P_ps37ri-xOqbYdRGGZWVTLWQAaV0liqBTqKW33W4w3oIvGfNWFQHxJ0USyRO96zgySiV7oL7up1SQ.svg" alt="Salesforce">
+                                    <span>Salesforce</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/59/SAP_2011_logo.svg" alt="SAP">
+                                    <span>SAP</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">하드웨어 제조업체 (Intel, NVIDIA, AMD 등)
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://i.namu.wiki/i/oITtKcSRhoK71QGKshPYcfRriDUQ5kLG20YoNlMNgCDCHzjUoP2vkCDxISgz42XgxxGos_JxD4OQWreMxX6szFcXzHROuuhVJn9u9N9e-5-09IeYdheCz3zwgxSkjnWrMgPSghjqQJaFkkqN4jkrog.svg" alt="Intel">
+                                    <span>Intel</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg" alt="NVIDIA">
+                                    <span>NVIDIA</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7c/AMD_Logo.svg" alt="AMD">
+                                    <span>AMD</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">오픈소스 커뮤니티 및 기술 표준화 재단
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" alt="Linux">
+                                    <span>Linux</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg" alt="Kubernetes">
+                                    <span>Kubernetes</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">APN (AWS Partner Network) 소속 기업
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://corp.dd-static.net/img/dd_logo_n_70x75.png?ch=Width,DPR&fit=max&auto=format&w=70&h=75
+" alt="Datadog">
+                                    <span>Datadog</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Snowflake_Logo.svg" alt="Snowflake">
+                                    <span>Snowflake</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
                 </ul>
             </div>
             <div class="block ka">

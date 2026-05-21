@@ -1,6 +1,16 @@
 # HTML 배포용 레포
 여러 목표로 제작한 html을 배포하기 위한 레포지토리
 
+## 접속 방법
+
+`main` 브랜치에 push되면 GitHub Actions가 `docs` 폴더를 스캔해서 `docs/index.html`을 자동 생성하고 GitHub Pages에 배포한다.
+
+- 목록 페이지: https://sksla123.github.io/priv-variant-html/
+- 개별 HTML 링크 규칙: `https://sksla123.github.io/priv-variant-html/<docs 아래 경로>`
+- 예시: https://sksla123.github.io/priv-variant-html/algorithm-visualizer/linked_list_intersect_algorithm.html
+
+자동 생성되는 `docs/index.html`은 배포 워크플로우 안에서 만들어지므로 로컬 파일 목록에는 없을 수 있다. 로컬에서 바로 확인하려면 `docs/algorithm-visualizer/*.html` 파일을 브라우저로 열면 된다.
+
 ## algorithm-visualizer
 특정한 알고리즘을 시각화한 웹페이지
 

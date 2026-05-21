@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업적 비즈니스 모델 캔버스</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 1000px;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #0f172a;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
+        .header h2 {
+            font-size: 16px;
+            color: #3b82f6;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+        }
+        .header p {
+            color: #475569;
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.6;
+            word-break: keep-all;
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-style: italic;
+        }
+        .canvas-wrapper {
+            background: #ffffff;
+            border: 2px solid #0f172a;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1200px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .top-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: 1fr 1fr;
+            border-bottom: 2px solid #0f172a;
+        }
+        .block {
+            padding: 20px;
+            border-right: 1px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+            box-sizing: border-box;
+        }
+        .block:last-child {
+            border-right: none;
+        }
+        .block h3 {
+            font-size: 16px;
+            color: #2563eb;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .block ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .block li {
+            font-size: 13.5px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 14px;
+            color: #334155;
+            word-break: keep-all;
+        }
+        .block > ul > li::before {
+            content: "•";
+            color: #0f172a;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        .block li strong {
+            color: #0f172a;
+        }
+        
+        /* 중첩 리스트 (불릿 포인트) 스타일 지정 */
+        .block ul ul {
+            margin-top: 6px;
+            margin-bottom: 10px;
+        }
+        .block ul ul li {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .block ul ul li::before {
+            content: "-";
+            color: #64748b;
+            font-weight: normal;
+        }
+
+        /* 9블록 CSS Grid 배치 */
+        .kp { grid-row: 1 / 3; grid-column: 1 / 2; }
+        .ka { grid-row: 1 / 2; grid-column: 2 / 3; }
+        .kr { grid-row: 2 / 3; grid-column: 2 / 3; }
+        .vp { grid-row: 1 / 3; grid-column: 3 / 4; background-color: #f0fdf4; } 
+        .cr { grid-row: 1 / 2; grid-column: 4 / 5; }
+        .ch { grid-row: 2 / 3; grid-column: 4 / 5; }
+        .cs { grid-row: 1 / 3; grid-column: 5 / 6; border-right: none; }
+        
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .bottom-section .block {
+            border-bottom: none;
+        }
+        .cst { grid-column: 1 / 2; border-right: 2px solid #0f172a; }
+        .rs { grid-column: 2 / 3; border-right: none; }
+        
+        .footer-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #64748b;
+            text-align: right;
+            width: 100%;
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>업적 (커리어 개발 및 관리 플랫폼)</h1>
+        <h2>비즈니스 모델 캔버스</h2>
+        <p>“업적은 파편화된 채용 정보로 인해 경력 개발 및 관리에 어려움을 겪는 구직 또는 이직자에게 AI 맞춤형 로드맵을 제공해, 솔루션 구독으로 수익을 창출하는 사업입니다.”</p>
+    </div>
+    <div class="canvas-wrapper">
+        <div class="top-section">
+            <div class="block kp">
+                <h3>핵심 파트너 (Key Partners)</h3>
+                <ul>
+                    <li><strong>Primary (현재)</strong>
+                        <ul>
+                            <li>어학, 자격증, 직무 교육 등 교육 콘텐츠 제공 기관</li>
+                            <li>공모전 및 대외활동 주최 기관</li>
+                            <li>클라우드 인프라 및 AI 모델 API 제공업체</li>
+                            <li>대학 취업지원센터 및 관련 기관</li>
+                        </ul>
+                    </li>
+                    <li><strong>Secondary (추후 확장)</strong>
+                        <ul>
+                            <li>채용 수요가 있는 B2B 기업 및 헤드헌팅사 (매칭 파트너)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="block ka">
+                <h3>핵심 활동 (Key Activities)</h3>
+                <ul>
+                    <li>AI 기반 맞춤형 커리어 로드맵 추천 알고리즘 고도화</li>
+                    <li>방대한 채용 정보 및 스펙 데이터 수집, 분류, 정제</li>
+                    <li>플랫폼 사용성(UI/UX) 개선 및 서비스 안정화</li>
+                    <li>사용자 데이터 아카이빙 및 B2B 채용 매칭 시스템 구축</li>
+                </ul>
+            </div>
+            <div class="block kr">
+                <h3>핵심 자원 (Key Resources)</h3>
+                <ul>
+                    <li>직무별 요구 역량 및 합격 스펙 데이터베이스</li>
+                    <li>사용자 맞춤형 AI 추천 엔진 기술력</li>
+                    <li>누적된 사용자 학습 및 역량 아카이브 데이터</li>
+                    <li>플랫폼 기획, AI/백엔드 개발 인력</li>
+                </ul>
+            </div>
+            <div class="block vp">
+                <h3>가치 제안 (Value Propositions)</h3>
+                <ul>
+                    <li><strong>Primary (B2C 타겟)</strong>
+                        <ul>
+                            <li>커리어 설계의 대중화: 고가의 전문가 1:1 컨설팅 영역을 AI로 자동화하여 저비용 제공</li>
+                            <li>개인 맞춤형 로드맵: 목표 직무에 최적화된 실행 계획 및 일정 자동 생성</li>
+                            <li>실행 중심 환경: 정보 탐색 시간을 최소화하고 역량 강화에 몰입 지원</li>
+                        </ul>
+                    </li>
+                    <li><strong>Secondary (추후 확장: B2B 타겟)</strong>
+                        <ul>
+                            <li>B2B 채용 효율화: 로드맵을 통해 검증된 인재 추천으로 채용 비용(Time-to-Hire) 절감</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="block cr">
+                <h3>고객 관계 (Customer Relationships)</h3>
+                <ul>
+                    <li>AI 챗봇/알림을 통한 개인화된 일정 관리 및 밀착 지원</li>
+                    <li>프리미엄 구독자를 위한 심화 데이터 및 인사이트 제공</li>
+                    <li>셀프 서비스 기반의 직관적인 목표 관리 환경</li>
+                </ul>
+            </div>
+            <div class="block ch">
+                <h3>채널 (Channels)</h3>
+                <ul>
+                    <li>웹 및 모바일 애플리케이션 플랫폼</li>
+                    <li>검색 엔진 최적화(SEO) 및 취업 커뮤니티 콘텐츠 마케팅</li>
+                    <li>소셜 미디어 타겟 광고 (2030 구직자 대상)</li>
+                    <li>대학 취업지원센터 B2B2C 제휴 채널</li>
+                </ul>
+            </div>
+            <div class="block cs">
+                <h3>고객 세그먼트 (Customer Segments)</h3>
+                <ul>
+                    <li><strong>Primary (B2C 시장)</strong>
+                        <ul>
+                            <li>초기 타겟: 직무 설정 및 스펙 가이드가 필요한 대학생 및 신입 취업 준비생</li>
+                            <li>확장 타겟: 구체적인 스펙 보완 방법을 고민하는 이직자</li>
+                        </ul>
+                    </li>
+                    <li><strong>Secondary (추후 확장: B2B 시장)</strong>
+                        <ul>
+                            <li>준비된 신입/주니어 인재를 선점하려는 기업 및 헤드헌팅사</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="bottom-section">
+            <div class="block cst">
+                <h3>비용 구조 (Cost Structure)</h3>
+                <ul>
+                    <li>AI 모델 개발, 학습 및 유지보수 인건비</li>
+                    <li>클라우드 서버 임대 및 데이터베이스 운영 비용</li>
+                    <li>초기 B2C 유저 확보를 위한 마케팅 및 프로모션 비용</li>
+                    <li>외부 교육/채용 데이터 API 연동 및 정제 비용</li>
+                </ul>
+            </div>
+            <div class="block rs">
+                <h3>수익원 (Revenue Streams)</h3>
+                <ul>
+                    <li><strong>Primary (B2C 중심)</strong>
+                        <ul>
+                            <li>B2C 구독 모델 (Freemium): 심화 분석, 알림 등에 대한 정기 결제</li>
+                            <li>광고 수익: 교육 콘텐츠 및 제휴 서비스 타겟팅 광고 노출</li>
+                        </ul>
+                    </li>
+                    <li><strong>Secondary (추후 확장: B2B 중심)</strong>
+                        <ul>
+                            <li>B2B 매칭 수수료: 축적된 데이터 기반 인재 추천 및 채용 성사 수수료</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-info">
+        작성일자: 2026.10.19 | 작성자: 박준용
+    </div>
+</body>
+</html>

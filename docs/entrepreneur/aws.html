@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS 비즈니스 모델 캔버스</title>
+    <!-- Pretendard 폰트 로드 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f5f7;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #232F3E; /* AWS 네이비 색상 */
+            margin: 0 0 10px 0;
+        }
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 16px;
+        }
+        .canvas-wrapper {
+            background: #fff;
+            border: 2px solid #232F3E;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1200px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .top-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: 1fr 1fr;
+            border-bottom: 2px solid #232F3E;
+        }
+        .block {
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            box-sizing: border-box;
+        }
+        .block:last-child {
+            border-right: none;
+        }
+        .block h3 {
+            font-size: 16px;
+            color: #FF9900; /* AWS 오렌지 색상 */
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .block ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .block li {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 14px;
+            color: #444;
+        }
+        .block li::before {
+            content: "•";
+            color: #232F3E;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        /* CSS Grid를 활용한 9블록 배치 */
+        .kp { grid-row: 1 / 3; grid-column: 1 / 2; }
+        .ka { grid-row: 1 / 2; grid-column: 2 / 3; }
+        .kr { grid-row: 2 / 3; grid-column: 2 / 3; }
+        .vp { grid-row: 1 / 3; grid-column: 3 / 4; }
+        .cr { grid-row: 1 / 2; grid-column: 4 / 5; }
+        .ch { grid-row: 2 / 3; grid-column: 4 / 5; }
+        .cs { grid-row: 1 / 3; grid-column: 5 / 6; border-right: none; }
+        
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .bottom-section .block {
+            border-bottom: none;
+        }
+        .cst { grid-column: 1 / 2; border-right: 2px solid #232F3E; }
+        .rs { grid-column: 2 / 3; border-right: none; }
+        
+        .source {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+            width: 100%;
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AWS (Amazon Web Services) 비즈니스 모델 캔버스</h1>
+        <p>클라우드 컴퓨팅 인프라 및 플랫폼 서비스 9블록 구조 분석</p>
+    </div>
+    <div class="canvas-wrapper">
+        <div class="top-section">
+            <div class="block kp">
+                <h3>핵심 파트너 (Key Partners)</h3>
+                <ul>
+                    <li>독립 소프트웨어 벤더 (ISV)</li>
+                    <li>시스템 통합 업체 (SI) 및 기술 컨설팅 파트너</li>
+                    <li>하드웨어 제조업체 (Intel, NVIDIA, AMD 등)</li>
+                    <li>오픈소스 커뮤니티 및 기술 표준화 재단</li>
+                    <li>APN (AWS Partner Network) 소속 기업</li>
+                </ul>
+            </div>
+            <div class="block ka">
+                <h3>핵심 활동 (Key Activities)</h3>
+                <ul>
+                    <li>글로벌 데이터 센터 인프라 구축 및 유지보수</li>
+                    <li>신규 클라우드 서비스 및 플랫폼 연구개발 (R&D)</li>
+                    <li>보안 컴플라이언스 및 인프라 보호</li>
+                    <li>서비스 가동 시간(SLA) 및 시스템 안정성 확보</li>
+                </ul>
+            </div>
+            <div class="block kr">
+                <h3>핵심 자원 (Key Resources)</h3>
+                <ul>
+                    <li>글로벌 데이터 센터 네트워크 (Regions 및 Availability Zones)</li>
+                    <li>독자적인 컴퓨팅 하드웨어 및 대규모 네트워크 인프라</li>
+                    <li>고급 소프트웨어 및 인프라 엔지니어 인력</li>
+                    <li>아마존(Amazon)의 자본력 및 브랜드 신뢰도</li>
+                </ul>
+            </div>
+            <div class="block vp">
+                <h3>가치 제안 (Value Propositions)</h3>
+                <ul>
+                    <li>초기 IT 인프라 투자 비용 절감 (자본 지출에서 운영 지출로 전환)</li>
+                    <li>사용한 리소스만큼만 지불하는 종량제 (Pay-as-you-go) 모델</li>
+                    <li>트래픽 변화에 즉각적으로 대응하는 무한한 확장성 및 탄력성</li>
+                    <li>컴퓨팅, 데이터베이스, AI/ML 등 수백 개 이상의 광범위한 서비스 제공</li>
+                    <li>최고 수준의 물리적/네트워크 보안 인프라</li>
+                </ul>
+            </div>
+            <div class="block cr">
+                <h3>고객 관계 (Customer Relationships)</h3>
+                <ul>
+                    <li>완전 자동화된 셀프 서비스 인터페이스 및 API</li>
+                    <li>엔터프라이즈 고객 전용 전담 기술 지원 (Technical Account Manager)</li>
+                    <li>AWS 커뮤니티, 개발자 포럼 및 방대한 공식 문서 지원</li>
+                    <li>고객 맞춤형 온보딩, 아키텍처 검토 및 교육 프로그램</li>
+                </ul>
+            </div>
+            <div class="block ch">
+                <h3>채널 (Channels)</h3>
+                <ul>
+                    <li>AWS 공식 웹사이트 및 관리 콘솔 (Management Console)</li>
+                    <li>AWS CLI (명령줄 인터페이스) 및 SDK</li>
+                    <li>글로벌 B2B 직접 영업 및 기술 영업 팀</li>
+                    <li>AWS 마켓플레이스 (서드파티 소프트웨어 유통 채널)</li>
+                </ul>
+            </div>
+            <div class="block cs">
+                <h3>고객 세그먼트 (Customer Segments)</h3>
+                <ul>
+                    <li>초기 인프라 비용에 민감한 스타트업 및 개인 개발자</li>
+                    <li>대규모 트래픽을 처리하는 엔터프라이즈 기업 (포춘 500대 기업 등)</li>
+                    <li>보안 및 규정 준수가 필수적인 정부 기관 및 공공 부문 (AWS GovCloud)</li>
+                    <li>고성능 컴퓨팅(HPC)이 필요한 학계 및 연구 기관</li>
+                </ul>
+            </div>
+        </div>
+        <div class="bottom-section">
+            <div class="block cst">
+                <h3>비용 구조 (Cost Structure)</h3>
+                <ul>
+                    <li>데이터 센터 물리적 인프라 구축 및 임대 비용 (규모의 경제를 위한 고정비)</li>
+                    <li>서버 운영 및 냉각을 위한 전력, 네트워크 대역폭 비용</li>
+                    <li>서비스 고도화를 위한 연구개발(R&D) 및 엔지니어 인건비</li>
+                    <li>글로벌 영업, 마케팅, 파트너십 관리 및 고객 지원 인프라 유지 비용</li>
+                </ul>
+            </div>
+            <div class="block rs">
+                <h3>수익원 (Revenue Streams)</h3>
+                <ul>
+                    <li>컴퓨팅, 스토리지, 데이터 전송 등 클라우드 리소스 사용에 따른 종량제 요금</li>
+                    <li>장기 약정 할인을 통한 구독형 요금 (Reserved Instances, Savings Plans)</li>
+                    <li>프리미엄 기술 지원(Support Plans) 및 컨설팅 서비스 계약 요금</li>
+                    <li>AWS 마켓플레이스 내 서드파티 솔루션 거래 수수료</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

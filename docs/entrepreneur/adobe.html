@@ -75,7 +75,7 @@
             color: #444;
             word-break: keep-all;
         }
-        .block > ul > li::before {
+        .block li::before {
             content: "•";
             color: #333333;
             position: absolute;
@@ -99,15 +99,7 @@
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-        /* 전문가 및 기업용 뱃지 (Adobe 레드 계열) */
-        .badge-pro {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-        /* 일반인 및 학생용 뱃지 (회색/파란색 계열) */
-        .badge-general {
+            /* 동일한 배색 적용 */
             background-color: #f1f5f9;
             color: #475569;
             border: 1px solid #cbd5e1;
@@ -347,14 +339,14 @@
             <div class="block cs">
                 <h3>고객 세그먼트 (Customer Segments)</h3>
                 <div class="segment-group">
-                    <span class="badge badge-pro">전문가 및 기업</span>
+                    <span class="badge">전문가 및 기업</span>
                     <ul>
                         <li>디자이너, 사진작가, 영상 편집자 등 크리에이티브 전문가 및 프리랜서</li>
                         <li>전사적 마케팅 및 디자인 툴이 필요한 엔터프라이즈 및 에이전시</li>
                     </ul>
                 </div>
                 <div class="segment-group">
-                    <span class="badge badge-general">일반인 및 학생</span>
+                    <span class="badge">일반인 및 학생</span>
                     <ul>
                         <li>포괄적인 문서 관리 및 협업이 필요한 일반 직장인 및 소프트웨어 역량을 갖추고자 하는 학생(교육 기관)</li>
                         <li>빠른 콘텐츠 제작을 원하는 마케터 및 일반 사용자 (Adobe Express)</li>

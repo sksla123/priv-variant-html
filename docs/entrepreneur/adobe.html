@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adobe 비즈니스 모델 캔버스</title>
+    <!-- Pretendard 폰트 로드 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f5f7;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #EB1000; /* Adobe 레드 색상 */
+            margin: 0 0 10px 0;
+        }
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 16px;
+        }
+        .canvas-wrapper {
+            background: #fff;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1200px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .top-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: 1fr 1fr;
+            border-bottom: 2px solid #333333;
+        }
+        .block {
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            box-sizing: border-box;
+        }
+        .block:last-child {
+            border-right: none;
+        }
+        .block h3 {
+            font-size: 16px;
+            color: #EB1000; /* Adobe 레드 색상 */
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .block ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .block li {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 14px;
+            color: #444;
+            word-break: keep-all;
+        }
+        .block li::before {
+            content: "•";
+            color: #333333;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        /* 마우스 호버 효과 및 툴팁 CSS */
+        .hover-item {
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dashed #999;
+            transition: color 0.2s ease;
+        }
+        .hover-item:hover {
+            color: #EB1000;
+            border-bottom-color: #EB1000;
+        }
+        .logo-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            left: 14px;
+            margin-top: 10px;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            z-index: 100;
+            white-space: nowrap;
+            pointer-events: none; 
+        }
+        .logo-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 10px;
+            height: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #d1d5db;
+            border-left: 1px solid #d1d5db;
+            transform: rotate(45deg);
+        }
+        .hover-item:hover .logo-tooltip {
+            visibility: visible;
+            opacity: 1;
+            margin-top: 8px;
+        }
+        .logo-tooltip .logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .logo-tooltip img {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+            max-width: 80px;
+        }
+        .logo-tooltip span {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        /* CSS Grid를 활용한 9블록 배치 */
+        .kp { grid-row: 1 / 3; grid-column: 1 / 2; }
+        .ka { grid-row: 1 / 2; grid-column: 2 / 3; }
+        .kr { grid-row: 2 / 3; grid-column: 2 / 3; }
+        .vp { grid-row: 1 / 3; grid-column: 3 / 4; }
+        .cr { grid-row: 1 / 2; grid-column: 4 / 5; }
+        .ch { grid-row: 2 / 3; grid-column: 4 / 5; }
+        .cs { grid-row: 1 / 3; grid-column: 5 / 6; border-right: none; }
+        
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .bottom-section .block {
+            border-bottom: none;
+        }
+        .cst { grid-column: 1 / 2; border-right: 2px solid #333333; }
+        .rs { grid-column: 2 / 3; border-right: none; }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Adobe 비즈니스 모델 캔버스</h1>
+        <p>글로벌 크리에이티브 소프트웨어 및 디지털 경험 플랫폼 구조 분석</p>
+    </div>
+    <div class="canvas-wrapper">
+        <div class="top-section">
+            <div class="block kp">
+                <h3>핵심 파트너 (Key Partners)</h3>
+                <ul>
+                    <li>
+                        <span class="hover-item">운영체제 및 하드웨어 제조사
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple">
+                                    <span>Apple</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft">
+                                    <span>Microsoft</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">퍼블릭 클라우드 인프라 제공업체
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS">
+                                    <span>AWS</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a8/Microsoft_Azure_Logo.svg" alt="Azure">
+                                    <span>Azure</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">엔터프라이즈 컨설팅 및 SI (Experience Cloud)
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/56/Deloitte.svg" alt="Deloitte">
+                                    <span>Deloitte</span>
+                                </div>
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/cd/Accenture_2017_logo.svg" alt="Accenture">
+                                    <span>Accenture</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="hover-item">플러그인/서드파티 개발자 생태계
+                            <div class="logo-tooltip">
+                                <div class="logo-wrapper">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/Maxon_logo.svg" alt="Maxon">
+                                    <span>Maxon</span>
+                                </div>
+                            </div>
+                        </span>
+                    </li>
+                    <li>교육 기관 및 대학 (아카데믹 파트너십)</li>
+                </ul>
+            </div>
+            <div class="block ka">
+                <h3>핵심 활동 (Key Activities)</h3>
+                <ul>
+                    <li>소프트웨어 제품 연구개발 (Photoshop, Premiere Pro 등)</li>
+                    <li>생성형 AI (Adobe Firefly, Sensei) 모델 학습 및 서비스 통합</li>
+                    <li>클라우드 기반 SaaS 플랫폼 유지보수 및 보안 관리</li>
+                    <li>디지털 크리에이터 커뮤니티(Behance 등) 활성화 및 관리</li>
+                    <li>전략적 M&A를 통한 포트폴리오 확장 (Frame.io, Workfront 등)</li>
+                </ul>
+            </div>
+            <div class="block kr">
+                <h3>핵심 자원 (Key Resources)</h3>
+                <ul>
+                    <li>업계 표준 소프트웨어 라이선스 및 지적재산권(IP) (예: PDF 표준)</li>
+                    <li>Adobe Firefly 및 Sensei 등 독자적인 AI/ML 기술 모델</li>
+                    <li>전 세계적인 전문가 사용자 기반 및 생태계 (Lock-in 자원)</li>
+                    <li>고급 소프트웨어 개발자 및 AI 리서치 인력</li>
+                    <li>사용자가 생산한 방대한 디지털 에셋(Adobe Stock) 데이터</li>
+                </ul>
+            </div>
+            <div class="block vp">
+                <h3>가치 제안 (Value Propositions)</h3>
+                <ul>
+                    <li><strong>Creative Cloud:</strong> 업계 표준의 포괄적인 크리에이티브 도구 세트 제공</li>
+                    <li><strong>Document Cloud:</strong> 신뢰성 높은 디지털 문서 관리 및 전자 서명(Acrobat Sign) 자동화</li>
+                    <li><strong>Experience Cloud:</strong> 엔터프라이즈를 위한 엔드투엔드 디지털 마케팅 및 분석 솔루션</li>
+                    <li><strong>Generative AI:</strong> 저작권 문제없이 상업적으로 사용 가능한 Firefly를 통한 생산성 극대화</li>
+                    <li>기기 간 심리스한 클라우드 동기화 및 협업 기능 제공</li>
+                </ul>
+            </div>
+            <div class="block cr">
+                <h3>고객 관계 (Customer Relationships)</h3>
+                <ul>
+                    <li>구독 기반의 셀프 서비스(Self-service)를 통한 자동화된 생애주기 관리</li>
+                    <li>Behance, Adobe Live 등 커뮤니티 주도형 참여 유도</li>
+                    <li>엔터프라이즈 고객 전용 계정 관리(Account Management) 및 맞춤형 지원</li>
+                    <li>소프트웨어 생태계 간 높은 호환성을 통한 강력한 고객 락인(Lock-in)</li>
+                </ul>
+            </div>
+            <div class="block ch">
+                <h3>채널 (Channels)</h3>
+                <ul>
+                    <li>Adobe.com (B2C/B2B 직접 온라인 판매 채널)</li>
+                    <li>공식 앱 스토어 (Apple App Store, Google Play 등)</li>
+                    <li>엔터프라이즈 전용 B2B 직접 영업 팀 (Direct Sales)</li>
+                    <li>교육 기관 및 학생 대상의 아카데믹 제휴 프로모션</li>
+                </ul>
+            </div>
+            <div class="block cs">
+                <h3>고객 세그먼트 (Customer Segments)</h3>
+                <ul>
+                    <li>디자이너, 사진작가, 영상 편집자 등 <strong>크리에이티브 전문가 및 프리랜서</strong></li>
+                    <li>전사적 마케팅 및 디자인 툴이 필요한 <strong>엔터프라이즈 및 에이전시</strong></li>
+                    <li>포괄적인 문서 관리 및 협업이 필요한 <strong>일반 기업 임직원</strong></li>
+                    <li>소프트웨어 역량을 갖추고자 하는 <strong>학생 및 교육 기관</strong></li>
+                    <li>빠른 콘텐츠 제작을 원하는 <strong>마케터 및 일반 사용자 (Adobe Express)</strong></li>
+                </ul>
+            </div>
+        </div>
+        <div class="bottom-section">
+            <div class="block cst">
+                <h3>비용 구조 (Cost Structure)</h3>
+                <ul>
+                    <li>소프트웨어 엔지니어링 및 AI 원천 기술 연구개발(R&D) 인건비</li>
+                    <li>SaaS 서비스 및 생성형 AI 인퍼런스를 위한 클라우드 인프라 운용비</li>
+                    <li>신규 고객 확보 및 유지를 위한 글로벌 마케팅, 세일즈 지출 (Adobe MAX 등)</li>
+                    <li>전략적 기업 인수 합병(M&A) 및 기술 통합 비용</li>
+                </ul>
+            </div>
+            <div class="block rs">
+                <h3>수익원 (Revenue Streams)</h3>
+                <ul>
+                    <li><strong>구독 매출 (Subscription):</strong> Creative, Document, Experience Cloud의 월/연간 SaaS 요금제 (매출의 절대 다수 차지)</li>
+                    <li><strong>엔터프라이즈 라이선스:</strong> 대규모 기업 대상 소프트웨어 일괄 도입 계약</li>
+                    <li><strong>생성형 AI 크레딧:</strong> Firefly 고속 생성 크레딧 소진 시 추가 과금 모델</li>
+                    <li><strong>마켓플레이스 수수료:</strong> Adobe Stock의 디지털 에셋 판매 및 라이선스 수익</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

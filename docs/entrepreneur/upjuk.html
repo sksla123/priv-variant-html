@@ -27,12 +27,6 @@
             margin: 0 0 10px 0;
             font-weight: 800;
         }
-        .header h2 {
-            font-size: 16px;
-            color: #3b82f6;
-            margin: 0 0 15px 0;
-            font-weight: 600;
-        }
         .header p {
             color: #475569;
             margin: 0;
@@ -89,7 +83,7 @@
             color: #334155;
             word-break: keep-all;
         }
-        .block > ul > li::before {
+        .block li::before {
             content: "•";
             color: #0f172a;
             position: absolute;
@@ -100,20 +94,32 @@
             color: #0f172a;
         }
         
-        /* 중첩 리스트 (불릿 포인트) 스타일 지정 */
-        .block ul ul {
-            margin-top: 6px;
+        /* 뱃지(Badge) 스타일 적용 */
+        .segment-group {
+            margin-bottom: 14px;
+        }
+        .segment-group:last-child {
+            margin-bottom: 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .block ul ul li {
-            font-size: 13px;
+        .badge-primary {
+            background-color: #dbeafe; /* 연한 파란색 */
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .badge-secondary {
+            background-color: #f1f5f9; /* 연한 회색 */
             color: #475569;
-            margin-bottom: 4px;
-        }
-        .block ul ul li::before {
-            content: "-";
-            color: #64748b;
-            font-weight: normal;
+            border: 1px solid #cbd5e1;
         }
 
         /* 9블록 CSS Grid 배치 */
@@ -135,41 +141,32 @@
         .cst { grid-column: 1 / 2; border-right: 2px solid #0f172a; }
         .rs { grid-column: 2 / 3; border-right: none; }
         
-        .footer-info {
-            margin-top: 15px;
-            font-size: 12px;
-            color: #64748b;
-            text-align: right;
-            width: 100%;
-            max-width: 1200px;
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>업적 (커리어 개발 및 관리 플랫폼)</h1>
-        <h2>비즈니스 모델 캔버스</h2>
         <p>“업적은 파편화된 채용 정보로 인해 경력 개발 및 관리에 어려움을 겪는 구직 또는 이직자에게 AI 맞춤형 로드맵을 제공해, 솔루션 구독으로 수익을 창출하는 사업입니다.”</p>
     </div>
     <div class="canvas-wrapper">
         <div class="top-section">
             <div class="block kp">
                 <h3>핵심 파트너 (Key Partners)</h3>
-                <ul>
-                    <li><strong>Primary (현재)</strong>
-                        <ul>
-                            <li>어학, 자격증, 직무 교육 등 교육 콘텐츠 제공 기관</li>
-                            <li>공모전 및 대외활동 주최 기관</li>
-                            <li>클라우드 인프라 및 AI 모델 API 제공업체</li>
-                            <li>대학 취업지원센터 및 관련 기관</li>
-                        </ul>
-                    </li>
-                    <li><strong>Secondary (추후 확장)</strong>
-                        <ul>
-                            <li>채용 수요가 있는 B2B 기업 및 헤드헌팅사 (매칭 파트너)</li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="segment-group">
+                    <span class="badge badge-primary">Primary</span>
+                    <ul>
+                        <li>어학, 자격증, 직무 교육 등 교육 콘텐츠 제공 기관</li>
+                        <li>공모전 및 대외활동 주최 기관</li>
+                        <li>클라우드 인프라 및 AI 모델 API 제공업체</li>
+                        <li>대학 취업지원센터 및 관련 기관</li>
+                    </ul>
+                </div>
+                <div class="segment-group">
+                    <span class="badge badge-secondary">Secondary</span>
+                    <ul>
+                        <li>채용 수요가 있는 B2B 기업 및 헤드헌팅사 (매칭 파트너)</li>
+                    </ul>
+                </div>
             </div>
             <div class="block ka">
                 <h3>핵심 활동 (Key Activities)</h3>
@@ -191,20 +188,20 @@
             </div>
             <div class="block vp">
                 <h3>가치 제안 (Value Propositions)</h3>
-                <ul>
-                    <li><strong>Primary (B2C 타겟)</strong>
-                        <ul>
-                            <li>커리어 설계의 대중화: 고가의 전문가 1:1 컨설팅 영역을 AI로 자동화하여 저비용 제공</li>
-                            <li>개인 맞춤형 로드맵: 목표 직무에 최적화된 실행 계획 및 일정 자동 생성</li>
-                            <li>실행 중심 환경: 정보 탐색 시간을 최소화하고 역량 강화에 몰입 지원</li>
-                        </ul>
-                    </li>
-                    <li><strong>Secondary (추후 확장: B2B 타겟)</strong>
-                        <ul>
-                            <li>B2B 채용 효율화: 로드맵을 통해 검증된 인재 추천으로 채용 비용(Time-to-Hire) 절감</li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="segment-group">
+                    <span class="badge badge-primary">Primary</span>
+                    <ul>
+                        <li>커리어 설계의 대중화: 고가의 전문가 1:1 컨설팅 영역을 AI로 자동화하여 저비용 제공</li>
+                        <li>개인 맞춤형 로드맵: 목표 직무에 최적화된 실행 계획 및 일정 자동 생성</li>
+                        <li>실행 중심 환경: 정보 탐색 시간을 최소화하고 역량 강화에 몰입 지원</li>
+                    </ul>
+                </div>
+                <div class="segment-group">
+                    <span class="badge badge-secondary">Secondary</span>
+                    <ul>
+                        <li>B2B 채용 효율화: 로드맵을 통해 검증된 인재 추천으로 채용 비용(Time-to-Hire) 절감</li>
+                    </ul>
+                </div>
             </div>
             <div class="block cr">
                 <h3>고객 관계 (Customer Relationships)</h3>
@@ -225,19 +222,19 @@
             </div>
             <div class="block cs">
                 <h3>고객 세그먼트 (Customer Segments)</h3>
-                <ul>
-                    <li><strong>Primary (B2C 시장)</strong>
-                        <ul>
-                            <li>초기 타겟: 직무 설정 및 스펙 가이드가 필요한 대학생 및 신입 취업 준비생</li>
-                            <li>확장 타겟: 구체적인 스펙 보완 방법을 고민하는 이직자</li>
-                        </ul>
-                    </li>
-                    <li><strong>Secondary (추후 확장: B2B 시장)</strong>
-                        <ul>
-                            <li>준비된 신입/주니어 인재를 선점하려는 기업 및 헤드헌팅사</li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="segment-group">
+                    <span class="badge badge-primary">Primary</span>
+                    <ul>
+                        <li>초기 타겟: 직무 설정 및 스펙 가이드가 필요한 대학생 및 신입 취업 준비생</li>
+                        <li>확장 타겟: 구체적인 스펙 보완 방법을 고민하는 이직자</li>
+                    </ul>
+                </div>
+                <div class="segment-group">
+                    <span class="badge badge-secondary">Secondary</span>
+                    <ul>
+                        <li>준비된 신입/주니어 인재를 선점하려는 기업 및 헤드헌팅사</li>
+                    </ul>
+                </div>
             </div>
         </div>
         <div class="bottom-section">
@@ -252,20 +249,21 @@
             </div>
             <div class="block rs">
                 <h3>수익원 (Revenue Streams)</h3>
-                <ul>
-                    <li><strong>Primary (B2C 중심)</strong>
-                        <ul>
-                            <li>B2C 구독 모델 (Freemium): 심화 분석, 알림 등에 대한 정기 결제</li>
-                            <li>광고 수익: 교육 콘텐츠 및 제휴 서비스 타겟팅 광고 노출</li>
-                        </ul>
-                    </li>
-                    <li><strong>Secondary (추후 확장: B2B 중심)</strong>
-                        <ul>
-                            <li>B2B 매칭 수수료: 축적된 데이터 기반 인재 추천 및 채용 성사 수수료</li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="segment-group">
+                    <span class="badge badge-primary">Primary</span>
+                    <ul>
+                        <li>B2C 구독 모델 (Freemium): 심화 분석, 알림 등에 대한 정기 결제</li>
+                        <li>광고 수익: 교육 콘텐츠 및 제휴 서비스 타겟팅 광고 노출</li>
+                    </ul>
+                </div>
+                <div class="segment-group">
+                    <span class="badge badge-secondary">Secondary</span>
+                    <ul>
+                        <li>B2B 매칭 수수료: 축적된 데이터 기반 인재 추천 및 채용 성사 수수료</li>
+                    </ul>
+                </div>
             </div>
         </div>
+    </div>
 </body>
 </html>

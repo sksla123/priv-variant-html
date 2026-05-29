@@ -27,6 +27,11 @@
             margin: 0 0 10px 0;
             font-weight: 800;
         }
+        .header h2 {
+            font-size: 20px;
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
         .header p {
             color: #475569;
             margin: 0;
@@ -50,7 +55,8 @@
         .top-section {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: 1fr 1fr;
+            /* 핵심활동/자원, 고객관계/채널 블록의 높이 비율을 조절하기 위해 grid-template-rows를 구체적으로 설정 (예: 3:2 비율) */
+            grid-template-rows: 1.5fr 1fr; 
             border-bottom: 2px solid #0f172a;
         }
         .block {
@@ -94,7 +100,6 @@
             color: #0f172a;
         }
         
-        /* 뱃지(Badge) 스타일 적용 */
         .segment-group {
             margin-bottom: 14px;
         }
@@ -112,24 +117,24 @@
             letter-spacing: 0.5px;
         }
         .badge-primary {
-            background-color: #dbeafe; /* 연한 파란색 */
+            background-color: #dbeafe;
             color: #1e40af;
             border: 1px solid #bfdbfe;
         }
         .badge-secondary {
-            background-color: #f1f5f9; /* 연한 회색 */
+            background-color: #f1f5f9;
             color: #475569;
             border: 1px solid #cbd5e1;
         }
 
-        /* 9블록 CSS Grid 배치 */
-        .kp { grid-row: 1 / 3; grid-column: 1 / 2; }
-        .ka { grid-row: 1 / 2; grid-column: 2 / 3; }
-        .kr { grid-row: 2 / 3; grid-column: 2 / 3; }
-        .vp { grid-row: 1 / 3; grid-column: 3 / 4; background-color: #f0fdf4; } 
-        .cr { grid-row: 1 / 2; grid-column: 4 / 5; }
-        .ch { grid-row: 2 / 3; grid-column: 4 / 5; }
-        .cs { grid-row: 1 / 3; grid-column: 5 / 6; border-right: none; }
+        /* 그리드 배치 최적화 */
+        .kp { grid-row: 1 / 3; grid-column: 1 / 2; } /* 핵심 파트너 - 전체 높이 */
+        .ka { grid-row: 1 / 2; grid-column: 2 / 3; } /* 핵심 활동 - 상단 (더 넓게) */
+        .kr { grid-row: 2 / 3; grid-column: 2 / 3; } /* 핵심 자원 - 하단 (좁게) */
+        .vp { grid-row: 1 / 3; grid-column: 3 / 4; background-color: #f0fdf4; } /* 가치 제안 - 전체 높이 */
+        .cr { grid-row: 1 / 2; grid-column: 4 / 5; } /* 고객 관계 - 상단 (더 넓게) */
+        .ch { grid-row: 2 / 3; grid-column: 4 / 5; } /* 채널 - 하단 (좁게) */
+        .cs { grid-row: 1 / 3; grid-column: 5 / 6; border-right: none; } /* 고객 세그먼트 - 전체 높이 */
         
         .bottom-section {
             display: grid;
@@ -165,7 +170,7 @@
                 <div class="segment-group">
                     <span class="badge badge-secondary">Secondary</span>
                     <ul>
-                        <li>채용 수요가 있는 B2B 기업 및 헤드헌팅사 (매칭 파트너)</li>
+                        <li>채용 수요가 있는 B2B 기업 및 헤드헌팅사</li>
                     </ul>
                 </div>
             </div>
@@ -182,9 +187,8 @@
                 <h3>핵심 자원 (Key Resources)</h3>
                 <ul>
                     <li>직무별 요구 역량 및 합격 스펙 데이터베이스</li>
-                    <li>사용자 맞춤형 AI 추천 엔진</li>
-                    <li>사용자 기록 데이터베이스</li>
-                    <li>플랫폼 및 커뮤니티 기획, AI/백엔드 개발 인력</li>
+                    <li>사용자 맞춤형 AI 추천 엔진 / 사용자 기록 DB</li>
+                    <li>플랫폼 기획 및 AI/백엔드 개발 전문 인력</li>
                 </ul>
             </div>
             <div class="block vp">
@@ -192,7 +196,7 @@
                 <div class="segment-group">
                     <span class="badge badge-primary">Primary</span>
                     <ul>
-                        <li>고가의 전문가 1:1 컨설팅 영역을 AI로 자동화하여 저비용으로 제공 및 대중화</li>
+                        <li>고가의 전문가 1:1 컨설팅 영역을 AI로 자동화하여 저비용으로 제공</li>
                         <li>목표 직무에 맞춰진 경력 개발 계획 생성 및 일정 관리</li>
                         <li>취업 준비 관련 정보 탐색 시간 최소화</li>
                     </ul>
@@ -200,24 +204,23 @@
                 <div class="segment-group">
                     <span class="badge badge-secondary">Secondary</span>
                     <ul>
-                        <li>B2B 채용 효율화: 구축된 DB 기반 인재 추천으로 일부 채용 비용 절감</li>
+                        <li>B2B 채용 효율화: 타겟 인재 매칭으로 채용 비용 절감</li>
                     </ul>
                 </div>
             </div>
             <div class="block cr">
                 <h3>고객 관계 (Customer Relationships)</h3>
                 <ul>
-                    <li><strong>일정 관리 서비스:</strong> AI 챗봇 및 푸시 알림 기반의 개인화된 상시 일정·목표 관리</li>
-                    <li><strong>고객 유지 전략:</strong> 마일스톤 달성 보상(배지, 리포트)을 통한 지속적인 업로드 및 실행 동기부여 및 취업 준비/커리어 관련 영상 제공</li>
-                    <li><strong>취업 관련 커뮤니티:</strong> 동일 직무 및 목표를 가진 구직자 간의 정보 공유 및 상호 피드백 환경 조성</li>
+                    <li><strong>일정 관리 서비스:</strong> AI 챗봇 및 푸시 알림 기반 개인화 관리</li>
+                    <li><strong>고객 유지 전략:</strong> 마일스톤 달성 보상 및 커리어 관련 영상 제공</li>
+                    <li><strong>취업 커뮤니티:</strong> 구직자 간 정보 공유 및 피드백 환경 조성</li>
                 </ul>
             </div>
             <div class="block ch">
                 <h3>채널 (Channels)</h3>
                 <ul>
                     <li>웹 및 모바일 애플리케이션 플랫폼</li>
-                    <li>소셜 미디어 광고</li>
-                    <li>대학 취업지원센터 제휴 채널</li>
+                    <li>소셜 미디어 광고 및 대학 취업지원센터 제휴</li>
                 </ul>
             </div>
             <div class="block cs">
@@ -225,8 +228,8 @@
                 <div class="segment-group">
                     <span class="badge badge-primary">Primary</span>
                     <ul>
-                        <li>초기 타겟: 직무 설정 및 스펙 가이드가 필요한 대학생 및 취업 준비생</li>
-                        <li>확장 타겟: 구체적인 스펙 보완 방법을 고민하는 이직자</li>
+                        <li>초기: 직무 설정 및 가이드가 필요한 대학생/취준생</li>
+                        <li>확장: 구체적 스펙 보완을 고민하는 이직자</li>
                     </ul>
                 </div>
                 <div class="segment-group">
@@ -241,10 +244,10 @@
             <div class="block cst">
                 <h3>비용 구조 (Cost Structure)</h3>
                 <ul>
-                    <li>AI 모델 개발, 학습 및 유지보수 인건비</li>
-                    <li>클라우드 서버 임대 및 데이터베이스 운영 비용</li>
-                    <li>초기 B2C 유저 확보를 위한 마케팅 및 프로모션 비용</li>
-                    <li>외부 교육/채용 데이터 API 연동 및 정제 비용</li>
+                    <li>AI 모델 개발, 학습 및 인프라 유지비</li>
+                    <li>클라우드 서버 및 데이터베이스 운영 비용</li>
+                    <li>유저 확보를 위한 마케팅 및 프로모션 비용</li>
+                    <li>외부 데이터 API 연동 및 데이터 정제 비용</li>
                 </ul>
             </div>
             <div class="block rs">
@@ -252,14 +255,14 @@
                 <div class="segment-group">
                     <span class="badge badge-primary">Primary</span>
                     <ul>
-                        <li>B2C 구독 모델 (Freemium): 심화 분석, 알림 등에 대한 정기 결제</li>
-                        <li>광고 수익: 교육 콘텐츠 및 제휴 서비스 타겟팅 광고 노출</li>
+                        <li>B2C 구독 모델 (Freemium): 심화 분석 및 프리미엄 기능</li>
+                        <li>광고 수익: 교육 콘텐츠 및 제휴 서비스 타겟팅 광고</li>
                     </ul>
                 </div>
                 <div class="segment-group">
                     <span class="badge badge-secondary">Secondary</span>
                     <ul>
-                        <li>B2B 매칭 수수료: 축적된 데이터 기반 인재 추천 및 채용 성사 수수료</li>
+                        <li>B2B 매칭 수수료: 인재 추천 및 채용 성사 수수료</li>
                     </ul>
                 </div>
             </div>
